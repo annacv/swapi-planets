@@ -27,6 +27,22 @@ export function getPlanets(page: number): Promise<SwapiPlanetsPage> {
   return fetchJson<SwapiPlanetsPage>(`/planets/?page=${page}`)
 }
 
+export async function getAllPlanets(): Promise<SwapiPlanet[]> {
+  const firstPage = await getPlanets(1)
+  const pageSize = firstPage.results.length || 10
+  const totalPages = Math.ceil(firstPage.count / pageSize)
+
+  if (totalPages <= 1) {
+    return firstPage.results
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) => getPlanets(index + 2)),
+  )
+
+  return firstPage.results.concat(...remainingPages.map((page) => page.results))
+}
+
 export function getPlanet(id: string | number): Promise<SwapiPlanet> {
   return fetchJson<SwapiPlanet>(`/planets/${id}/`)
 }

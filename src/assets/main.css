@@ -1,1 +1,42 @@
 @import 'tailwindcss';
+@config '../../tailwind.config.ts';
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-galaxy: #010106;
+  --color-star: #ffffff;
+  --color-flame: #f0a848;
+  --color-ember: #e86820;
+  --color-muted: #8a8a8a;
+  --color-field: #d4d4d4;
+  --color-heart: #4a4a4a;
+  --text-xxs: 10px;
+  --animate-blink: blink 0.6s linear infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  @apply m-0 bg-galaxy font-sans text-star text-base antialiased;
+}
+
+.planet-search::-webkit-search-decoration,
+.planet-search::-webkit-search-cancel-button,
+.planet-search::-webkit-search-results-button,
+.planet-search::-webkit-search-results-decoration {
+  appearance: none;
+}
