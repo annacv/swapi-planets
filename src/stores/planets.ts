@@ -7,7 +7,7 @@ import { pageCountFor, pageSlice } from '@/utils/pagination'
 import { readStringList, writeStringList } from '@/utils/storage'
 
 const FAVOURITES_KEY = 'swapi-planets:favourites'
-const PAGE_SIZE = 10
+export const PAGE_SIZE = 10
 
 export const usePlanetsStore = defineStore('planets', () => {
   const filmTitlesByUrl = ref<Record<string, string>>({})
@@ -32,32 +32,21 @@ export const usePlanetsStore = defineStore('planets', () => {
       ? allPlanets.value.filter((planet) => isFavourite(planetIdFromUrl(planet.url)))
       : allPlanets.value
 
+    const listed = planets.filter((planet) => planet.name && planet.name !== 'unknown')
     const query = searchQuery.value.trim().toLowerCase()
-    if (!query) return planets
-    return planets.filter((planet) => planet.name.toLowerCase().startsWith(query))
+    if (!query) return listed
+    return listed.filter((planet) => planet.name.toLowerCase().startsWith(query))
   })
 
   const pageCount = computed(() => pageCountFor(filteredPlanets.value.length, PAGE_SIZE))
-
-  const pagedPlanets = computed(() => pageSlice(filteredPlanets.value, currentPage.value, PAGE_SIZE))
-
-  const listedPlanets = computed(() => {
-    if (searchQuery.value.trim()) return filteredPlanets.value
-    return pagedPlanets.value
-  })
-
   const isSearching = computed(() => searchQuery.value.trim().length > 0)
+  const listedPlanets = computed(() => {
+    if (isSearching.value) return filteredPlanets.value
+    return pageSlice(filteredPlanets.value, currentPage.value, PAGE_SIZE)
+  })
 
   const hasNext = computed(() => currentPage.value < pageCount.value)
   const hasPrevious = computed(() => currentPage.value > 1)
-  const totalCount = computed(() => filteredPlanets.value.length)
-
-  const favouritePlanets = computed(() =>
-    favouriteIds.value.map((id) => ({
-      id,
-      name: planetsById.value[id]?.name ?? `Planet ${id}`,
-    })),
-  )
 
   watch([searchQuery, showFavouritesOnly], () => {
     currentPage.value = 1
@@ -92,12 +81,10 @@ export const usePlanetsStore = defineStore('planets', () => {
 
   function setSearchQuery(value: string) {
     searchQuery.value = value
-    currentPage.value = 1
   }
 
   function toggleFavouritesFilter() {
     showFavouritesOnly.value = !showFavouritesOnly.value
-    currentPage.value = 1
   }
 
   async function ensureFilms() {
@@ -149,13 +136,11 @@ export const usePlanetsStore = defineStore('planets', () => {
   }
 
   return {
-    filmTitlesByUrl,
     allPlanets,
     currentPage,
     pageCount,
     hasNext,
     hasPrevious,
-    totalCount,
     searchQuery,
     showFavouritesOnly,
     favouriteIds,
@@ -164,10 +149,8 @@ export const usePlanetsStore = defineStore('planets', () => {
     detailLoading,
     detailError,
     filteredPlanets,
-    pagedPlanets,
     listedPlanets,
     isSearching,
-    favouritePlanets,
     planetsById,
     filmTitlesFor,
     isFavourite,
@@ -175,7 +158,6 @@ export const usePlanetsStore = defineStore('planets', () => {
     setPage,
     setSearchQuery,
     toggleFavouritesFilter,
-    ensureFilms,
     loadCatalogue,
     loadPlanet,
   }

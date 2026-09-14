@@ -1,6 +1,6 @@
 import type { SwapiPlanet } from '@/api/types'
 
-export const MAX_CIRCLE_PX = 100
+export const MAX_CIRCLE_PX = 120
 export const MIN_CIRCLE_PX = 16
 
 export function parseDiameter(value: string): number | null {

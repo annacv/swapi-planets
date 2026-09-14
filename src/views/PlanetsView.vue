@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import Pagination from '@/components/Pagination.vue'
@@ -11,6 +11,9 @@ import { usePlanetsStore } from '@/stores/planets'
 const planetsStore = usePlanetsStore()
 const { listLoading, listError, listedPlanets, allPlanets, filteredPlanets } = storeToRefs(planetsStore)
 const { loadCatalogue } = planetsStore
+
+const focusedPlanetId = ref<string | null>(null)
+const listPointerPlanetId = ref<string | null>(null)
 
 const listStatus = computed(() => {
   if (listLoading.value) return 'loading'
@@ -25,12 +28,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_38rem] items-start">
+  <main class="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_42rem] items-start">
     <section class="relative h-[42vh] min-h-[16rem] self-stretch lg:h-auto lg:min-h-screen" aria-label="Planet map">
       <PlanetMap
         v-if="listStatus === 'ready'"
         :planets="listedPlanets"
         :catalogue="allPlanets"
+        :pointer-planet-id="listPointerPlanetId"
+        @focus-planet="focusedPlanetId = $event"
       />
     </section>
 
@@ -55,7 +60,10 @@ onMounted(() => {
       </template>
 
       <template v-if="listStatus === 'ready'">
-        <PlanetsList  />
+        <PlanetsList
+          :focused-planet-id="focusedPlanetId"
+          @pointer-planet="listPointerPlanetId = $event"
+        />
         <Pagination />
       </template>
     </section>

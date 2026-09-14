@@ -1,46 +1,156 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 
 import { planetIdFromUrl } from '@/api/swapi'
 import type { SwapiPlanet } from '@/api/types'
+import PlanetTooltip from '@/components/PlanetTooltip.vue'
 import { circleSizePx, MAX_CIRCLE_PX, maxKnownDiameter } from '@/utils/planetDiameter'
+import { goldenAnglePosition } from '@/utils/goldenAnglePosition'
 
 const props = defineProps<{
   planets: SwapiPlanet[]
   catalogue: SwapiPlanet[]
+  pointerPlanetId?: string | null
 }>()
 
-const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
+const emit = defineEmits<{
+  'focus-planet': [id: string | null]
+}>()
+
+const FOCUS_MS = 3000
 
 const maxDiameter = computed(() => maxKnownDiameter(props.catalogue))
+const pageKey = computed(() => props.planets.map((planet) => planetIdFromUrl(planet.url)).join('|'))
+const pointerIndex = ref<number | null>(null)
+const currentIndex = ref(0)
+
+function indexFromPointerId(id: string | null | undefined) {
+  if (!id) return null
+  const index = props.planets.findIndex((planet) => planetIdFromUrl(planet.url) === id)
+  return index === -1 ? null : index
+}
+
+const focusedIndex = computed(() => pointerIndex.value ?? currentIndex.value)
+
+watch(
+  [focusedIndex, () => props.planets],
+  () => {
+    const planet = props.planets[focusedIndex.value]
+    emit('focus-planet', planet ? planetIdFromUrl(planet.url) : null)
+  },
+  { immediate: true },
+)
+
+watch(() => props.pointerPlanetId, (id) => {
+  pointerIndex.value = indexFromPointerId(id)
+})
 
 function circleStyle(planet: SwapiPlanet, index: number) {
   const size = circleSizePx(planet.diameter, maxDiameter.value)
-  const count = Math.max(props.planets.length, 1)
-  const radius = Math.sqrt((index + 0.5) / count) * 0.4
-  const angle = index * GOLDEN_ANGLE
-  const cx = 0.48 + Math.cos(angle) * radius
-  const cy = 0.52 + Math.sin(angle) * radius
+  const { x, y } = goldenAnglePosition(index, props.planets.length)
 
   return {
-    width: `${size}px`,
-    height: `${size}px`,
-    left: `calc(${cx * 100}% - ${size / 2}px)`,
-    top: `calc(${cy * 100}% - ${size / 2}px)`,
-    zIndex: String(MAX_CIRCLE_PX - size),
+    '--planet-target': `${size}px`,
+    '--planet-delay': `${index * 90}ms`,
+    left: `${x * 100}%`,
+    top: `${y * 100}%`,
+    zIndex: String(index === focusedIndex.value ? MAX_CIRCLE_PX + 1 : MAX_CIRCLE_PX - size),
   }
 }
+
+let focusTimer = 0
+
+function stopFocusCycle() {
+  window.clearInterval(focusTimer)
+  focusTimer = 0
+}
+
+function startFocusCycle() {
+  stopFocusCycle()
+  pointerIndex.value = indexFromPointerId(props.pointerPlanetId)
+  currentIndex.value = 0
+
+  if (props.planets.length === 0) return
+
+  focusTimer = window.setInterval(() => {
+    if (pointerIndex.value !== null) return
+    currentIndex.value = (currentIndex.value + 1) % props.planets.length
+  }, FOCUS_MS)
+}
+
+watch(pageKey, () => stopFocusCycle())
+
+onUnmounted(stopFocusCycle)
 </script>
 
 <template>
-  <div class="absolute inset-0 overflow-hidden">
-    <RouterLink
-      v-for="(planet, index) in planets"
-      :key="planet.url"
-      :to="{ name: 'planet-detail', params: { id: planetIdFromUrl(planet.url) } }"
-      class="absolute rounded-full bg-star hover:opacity-90"
-      :style="circleStyle(planet, index)"
-      :aria-label="planet.name"
-    />
+  <div class="absolute inset-0 overflow-visible">
+    <Transition name="planet-page" mode="out-in" appear @after-enter="startFocusCycle">
+      <div :key="pageKey" class="absolute inset-0">
+        <RouterLink
+          v-for="(planet, index) in planets"
+          :key="planet.url"
+          :to="{ name: 'planet-detail', params: { id: planetIdFromUrl(planet.url) } }"
+          class="planet-dot absolute rounded-full bg-star"
+          :class="index === focusedIndex ? 'planet-dot-active' : undefined"
+          :style="circleStyle(planet, index)"
+          :aria-label="planet.name"
+          @mouseenter="pointerIndex = index"
+          @mouseleave="pointerIndex = null"
+          @focus="pointerIndex = index"
+          @blur="pointerIndex = null"
+        />
+
+        <PlanetTooltip
+          :planet="planets[focusedIndex] ?? null"
+          :index="focusedIndex"
+          :count="planets.length"
+          :max-diameter="maxDiameter"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.planet-dot {
+  --planet-size: var(--planet-target);
+  width: var(--planet-size);
+  height: var(--planet-size);
+  margin-left: calc(var(--planet-size) / -2);
+  margin-top: calc(var(--planet-size) / -2);
+  box-shadow: 0 0 0 0 transparent;
+  transition:
+    --planet-size 1.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.35s ease;
+}
+
+.planet-dot-active {
+  box-shadow: 0 0 0 2px var(--color-flame);
+}
+
+.planet-page-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.planet-page-leave-to {
+  opacity: 0;
+}
+
+.planet-page-enter-from .planet-dot {
+  --planet-size: 0px;
+}
+
+.planet-page-enter-active .planet-dot {
+  transition-delay: var(--planet-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planet-dot,
+  .planet-page-leave-active,
+  .planet-page-enter-active .planet-dot {
+    transition: none;
+    transition-delay: 0ms;
+  }
+}
+</style>

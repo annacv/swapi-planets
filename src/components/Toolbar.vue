@@ -20,7 +20,7 @@ function onSearchInput(event: Event) {
       :value="searchQuery"
       type="search"
       placeholder="Search planets by name"
-      class="planet-search h-9 min-w-0 max-w-[320px] flex-1 rounded-full bg-field px-3 text-[13px] text-galaxy placeholder:text-heart focus:outline-none"
+      class="planet-search h-9 min-w-0 max-w-[320px] flex-1 rounded-full bg-field px-3 text-base lg:text-xs text-galaxy placeholder:text-heart"
       @input="onSearchInput"
     />
     <div class="flex shrink-0 items-center gap-2.5">
