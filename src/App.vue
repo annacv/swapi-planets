@@ -3,13 +3,10 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-hidden bg-galaxy font-sans text-star">
-    <img
-      :src="galaxy"
-      alt=""
-      class="galaxy-spin pointer-events-none absolute left-1/2 top-1/2 z-0 max-w-none select-none"
-      aria-hidden="true"
-    />
+  <div class="relative min-h-dvh bg-galaxy font-sans text-star">
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-clip" aria-hidden="true">
+      <img :src="galaxy" alt="" class="galaxy-spin absolute left-1/2 top-1/2 max-w-none select-none" />
+    </div>
     <header class="absolute z-20 pointer-events-none px-4 py-2 w-full">
       <a
         href="https://swapi.dev/"

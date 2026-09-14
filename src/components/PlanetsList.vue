@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { planetIdFromUrl } from '@/api/swapi'
-import HeartIcon from '@/components/HeartIcon.vue'
+import LikeButton from '@/components/LikeButton.vue'
 import { PAGE_SIZE, usePlanetsStore } from '@/stores/planets'
 
 const props = defineProps<{
@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 const planetsStore = usePlanetsStore()
 const { listedPlanets } = storeToRefs(planetsStore)
-const { filmTitlesFor, isFavourite, toggleFavourite } = planetsStore
+const { filmTitlesFor } = planetsStore
 
 const rows = computed(() =>
   listedPlanets.value.map((planet) => {
@@ -25,7 +25,6 @@ const rows = computed(() =>
       planet,
       id,
       films: filmTitlesFor(planet),
-      favourite: isFavourite(id),
     }
   }),
 )
@@ -60,19 +59,7 @@ const listKey = computed(() => rows.value.map((row) => row.planet.url).join('|')
             <span v-if="row.films.length">{{ row.films.join(', ') }}</span>
             <span v-else class="italic">No films listed</span>
           </p>
-          <button
-            type="button"
-            class="shrink-0"
-            :aria-pressed="row.favourite"
-            :aria-label="
-              row.favourite
-                ? `Remove ${row.planet.name} from favourites`
-                : `Add ${row.planet.name} to favourites`
-            "
-            @click="toggleFavourite(row.id)"
-          >
-            <HeartIcon :active="row.favourite" />
-          </button>
+          <LikeButton :planet-id="row.id" :planet-name="row.planet.name" />
         </li>
       </ul>
     </Transition>

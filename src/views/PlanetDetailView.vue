@@ -1,17 +1,26 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 
-import HeartIcon from '@/components/HeartIcon.vue'
+import LikeButton from '@/components/LikeButton.vue'
 import { usePlanetsStore } from '@/stores/planets'
 
 const route = useRoute()
 const store = usePlanetsStore()
+const { planetsById, detailLoading, detailError } = storeToRefs(store)
+const { loadPlanet, filmTitlesFor } = store
 
 const planetId = computed(() => String(route.params.id))
-const planet = computed(() => store.planetsById[planetId.value])
+const planet = computed(() => planetsById.value[planetId.value])
 
-const fields = computed(() => {
+const filmLine = computed(() => {
+  if (!planet.value) return ''
+  const titles = filmTitlesFor(planet.value)
+  return titles.length ? titles.join(', ') : 'No films listed'
+})
+
+const stats = computed(() => {
   if (!planet.value) return []
   return [
     ['Climate', planet.value.climate],
@@ -28,61 +37,64 @@ const fields = computed(() => {
 watch(
   planetId,
   (id) => {
-    void store.loadPlanet(id)
+    void loadPlanet(id)
   },
   { immediate: true },
 )
 </script>
 
 <template>
-  <main class="mx-auto max-w-3xl px-4 pb-8 pt-20">
-    <p>
-      <RouterLink to="/planets" class="text-sm text-flame hover:underline">← Back to planets</RouterLink>
-    </p>
+  <main class="flex min-h-screen flex-col px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
+    <p v-if="detailLoading" class="mt-10 text-muted">Loading planet…</p>
 
-    <p v-if="store.detailLoading" class="mt-6 text-stone-400">Loading planet…</p>
-
-    <div v-else-if="store.detailError" class="mt-6 rounded-md border border-red-900 bg-red-950/40 p-4">
-      <p class="text-red-200">{{ store.detailError }}</p>
+    <div v-else-if="detailError" class="mt-10 max-w-lg rounded-md border border-red-900 bg-red-950/40 p-4">
+      <p class="text-red-200">{{ detailError }}</p>
       <button
         type="button"
-        class="mt-3 rounded-md bg-red-900 px-3 py-1.5 text-sm text-red-50 hover:bg-red-800"
-        @click="store.loadPlanet(planetId, { force: true })"
+        class="mt-3 rounded-full bg-red-900 px-3 py-1.5 text-sm text-red-50 hover:bg-red-800"
+        @click="loadPlanet(planetId, { force: true })"
       >
         Retry
       </button>
     </div>
 
-    <article v-else-if="planet" class="mt-6">
-      <div class="flex items-start justify-between gap-4">
-        <h1 class="text-3xl font-semibold tracking-tight">{{ planet.name }}</h1>
-        <button
-          type="button"
-          class="shrink-0"
-          :aria-pressed="store.isFavourite(planetId)"
-          :aria-label="
-            store.isFavourite(planetId) ? `Remove ${planet.name} from favourites` : `Add ${planet.name} to favourites`
-          "
-          @click="store.toggleFavourite(planetId)"
-        >
-          <HeartIcon :active="store.isFavourite(planetId)" />
-        </button>
-      </div>
+    <article v-else-if="planet" class="flex flex-1 flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
+      <div
+        class="mt-4 size-[min(38vw,17.5rem)] shrink-0 rounded-full bg-star"
+        :aria-hidden="true"
+      />
 
-      <dl class="mt-6 grid gap-4 sm:grid-cols-2">
-        <div v-for="[label, value] in fields" :key="label" class="rounded-md border border-stone-800 bg-stone-900/50 p-3">
-          <dt class="text-xs uppercase tracking-wide text-stone-500">{{ label }}</dt>
-          <dd class="mt-1 text-stone-100">{{ value }}</dd>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-10 sm:gap-16">
+          <h1 class="text-4xl font-normal tracking-tight">{{ planet.name }}</h1>
+          <LikeButton :planet-id="planetId" :planet-name="planet.name" :size="32" />
         </div>
-      </dl>
 
-      <section class="mt-8" aria-labelledby="films-heading">
-        <h2 id="films-heading" class="text-sm font-medium uppercase tracking-wide text-stone-500">Films</h2>
-        <ul v-if="store.filmTitlesFor(planet).length" class="mt-2 list-disc pl-5 text-stone-200">
-          <li v-for="title in store.filmTitlesFor(planet)" :key="title">{{ title }}</li>
-        </ul>
-        <p v-else class="mt-2 text-stone-400">No films listed</p>
-      </section>
+        <section class="mt-8" aria-labelledby="films-heading">
+          <h2
+            id="films-heading"
+            class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
+          >
+            Films
+          </h2>
+          <p class="mt-4 text-2xl font-light leading-snug text-star">{{ filmLine }}</p>
+        </section>
+
+        <dl class="mt-10 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div v-for="[label, value] in stats" :key="label">
+            <dt class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star">
+              {{ label }}
+            </dt>
+            <dd class="mt-4 text-2xl font-light text-star">{{ value }}</dd>
+          </div>
+        </dl>
+      </div>
     </article>
+
+    <p class="py-8">
+      <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
+        ← Back to planets
+      </RouterLink>
+    </p>
   </main>
 </template>
