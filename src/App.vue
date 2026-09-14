@@ -25,10 +25,10 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
 
 <style scoped>
 .galaxy-spin {
-  width: 150vmax;
-  height: 150vmax;
-  object-fit: cover;
-  animation: galaxy-spin 800s linear infinite;
+  width: 100vmax;
+  height: 100vmax;
+  object-fit: contain;
+  animation: galaxy-spin 600s linear infinite;
 }
 
 @keyframes galaxy-spin {

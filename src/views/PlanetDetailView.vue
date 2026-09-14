@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 
 import LikeButton from '@/components/LikeButton.vue'
 import { usePlanetsStore } from '@/stores/planets'
+import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const route = useRoute()
 const store = usePlanetsStore()
@@ -58,9 +59,10 @@ watch(
       </button>
     </div>
 
-    <article v-else-if="planet" class="flex flex-1 flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
+    <article v-else-if="planet" class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
       <div
-        class="mt-4 size-[min(38vw,17.5rem)] shrink-0 rounded-full bg-star"
+        class="mt-4 size-[min(38vw,17.5rem)] shrink-0 rounded-full"
+        :style="planetSurfaceStyle(planet.terrain, planet.surface_water)"
         :aria-hidden="true"
       />
 
@@ -77,7 +79,12 @@ watch(
           >
             Films
           </h2>
-          <p class="mt-4 text-2xl font-light leading-snug text-star">{{ filmLine }}</p>
+          <p
+            class="mt-4 text-2xl font-light leading-snug text-star"
+            :class="{ italic: !planet.films.length }"
+          >
+            {{ filmLine }}
+          </p>
         </section>
 
         <dl class="mt-10 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,7 +92,9 @@ watch(
             <dt class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star">
               {{ label }}
             </dt>
-            <dd class="mt-4 text-2xl font-light text-star">{{ value }}</dd>
+            <dd class="mt-4 text-2xl font-light text-star" :class="{ italic: value === 'unknown' }">
+              {{ value }}
+            </dd>
           </div>
         </dl>
       </div>

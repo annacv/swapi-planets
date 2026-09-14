@@ -6,6 +6,7 @@ import type { SwapiPlanet } from '@/api/types'
 import PlanetTooltip from '@/components/PlanetTooltip.vue'
 import { circleSizePx, MAX_CIRCLE_PX, maxKnownDiameter } from '@/utils/planetDiameter'
 import { goldenAnglePosition } from '@/utils/goldenAnglePosition'
+import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const props = defineProps<{
   planets: SwapiPlanet[]
@@ -55,6 +56,7 @@ function circleStyle(planet: SwapiPlanet, index: number) {
     left: `${x * 100}%`,
     top: `${y * 100}%`,
     zIndex: String(index === focusedIndex.value ? MAX_CIRCLE_PX + 1 : MAX_CIRCLE_PX - size),
+    ...planetSurfaceStyle(planet.terrain, planet.surface_water),
   }
 }
 
@@ -91,7 +93,7 @@ onUnmounted(stopFocusCycle)
           v-for="(planet, index) in planets"
           :key="planet.url"
           :to="{ name: 'planet-detail', params: { id: planetIdFromUrl(planet.url) } }"
-          class="planet-dot absolute rounded-full bg-star"
+          class="planet-dot absolute rounded-full"
           :class="index === focusedIndex ? 'planet-dot-active' : undefined"
           :style="circleStyle(planet, index)"
           :aria-label="planet.name"
