@@ -10,7 +10,7 @@ import { usePlanetsStore } from '@/stores/planets'
 
 const planetsStore = usePlanetsStore()
 const { listLoading, listError, listedPlanets, allPlanets, filteredPlanets } = storeToRefs(planetsStore)
-const { loadCatalogue } = planetsStore
+const { loadCatalogue, setSearchQuery } = planetsStore
 
 const focusedPlanetId = ref<string | null>(null)
 const listPointerPlanetId = ref<string | null>(null)
@@ -21,6 +21,11 @@ const listStatus = computed(() => {
   if (filteredPlanets.value.length === 0) return 'empty'
   return 'ready'
 })
+
+function retryList() {
+  setSearchQuery('')
+  void loadCatalogue({ force: true })
+}
 
 onMounted(() => {
   void loadCatalogue()
@@ -51,8 +56,8 @@ onMounted(() => {
           </p>
           <button
             type="button"
-            class="mt-3 rounded bg-star px-3 py-1 text-sm text-galaxy"
-            @click="loadCatalogue({ force: true })"
+            class="mt-3 rounded-full bg-star px-3 py-1 text-sm text-galaxy"
+            @click="retryList"
           >
             Retry
           </button>

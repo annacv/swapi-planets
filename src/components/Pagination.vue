@@ -5,9 +5,12 @@ import { storeToRefs } from 'pinia'
 import { usePlanetsStore } from '@/stores/planets'
 
 const planetsStore = usePlanetsStore()
-const { currentPage, pageCount, hasPrevious, hasNext, listLoading, listError, isSearching, filteredPlanets } =
+const { currentPage, pageCount, listLoading, listError, isSearching, filteredPlanets } =
   storeToRefs(planetsStore)
 const { setPage } = planetsStore
+
+const hasPrevious = computed(() => currentPage.value > 1)
+const hasNext = computed(() => currentPage.value < pageCount.value)
 
 const visible = computed(
   () => !listLoading.value && !listError.value && !isSearching.value && filteredPlanets.value.length > 0,
