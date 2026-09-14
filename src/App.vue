@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import logo from '@/assets/images/acondal.svg'
 import galaxy from '@/assets/images/bg-galaxy.svg'
 </script>
 
@@ -17,9 +18,13 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
         Star Wars planets via SWAPI
       </a>
     </header>
-    <div class="relative z-10">
-      <RouterView />
-    </div>
+    <RouterView class="relative z-10" />
+    <footer class="absolute bottom-0 z-20 pointer-events-none px-4 py-2 w-full">
+      <a href="https://github.com/annacv" target="_blank" rel="noopener" class="pointer-events-auto inline-flex items-center gap-1.5 text-xs text-star">
+        <span>By</span>
+        <img :src="logo" alt="author logo" class="h-4 w-auto" />
+      </a>
+    </footer>
   </div>
 </template>
 
