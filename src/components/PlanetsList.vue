@@ -55,7 +55,9 @@ const listKey = computed(() => rows.value.map((row) => row.planet.url).join('|')
           >
             {{ row.planet.name }}
           </RouterLink>
-          <p class="min-w-0 flex-1 text-xxs leading-[13px] text-star line-clamp-2 md:line-clamp-none">
+          <p
+            class="min-w-0 flex-1 text-xxs leading-[13px] text-star line-clamp-2 md:line-clamp-none"
+          >
             <span v-if="row.films.length">{{ row.films.join(', ') }}</span>
             <span v-else class="italic">No films listed</span>
           </p>

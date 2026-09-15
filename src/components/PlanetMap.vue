@@ -50,9 +50,12 @@ watch(
   { immediate: true },
 )
 
-watch(() => props.pointerPlanetId, (id) => {
-  pointerIndex.value = indexFromPointerId(id)
-})
+watch(
+  () => props.pointerPlanetId,
+  (id) => {
+    pointerIndex.value = indexFromPointerId(id)
+  },
+)
 
 function circleStyle(planet: SwapiPlanet, index: number) {
   const size = circleSizePx(planet.diameter, maxDiameter.value, maxCirclePx.value)

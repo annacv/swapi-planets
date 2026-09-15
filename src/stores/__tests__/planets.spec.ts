@@ -36,7 +36,12 @@ function makeFilm(index: number): SwapiFilm {
 
 vi.mock('@/api/swapi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/swapi')>()
-  return { ...actual, getAllPlanets: vi.fn(), getFilms: vi.fn(), getPlanet: vi.fn() }
+  return {
+    ...actual,
+    getAllPlanets: vi.fn<typeof actual.getAllPlanets>(),
+    getFilms: vi.fn<typeof actual.getFilms>(),
+    getPlanet: vi.fn<typeof actual.getPlanet>(),
+  }
 })
 
 import { getAllPlanets, getFilms, getPlanet } from '@/api/swapi'

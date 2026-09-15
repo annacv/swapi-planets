@@ -10,6 +10,7 @@ A Star Wars planets explorer built with Vue 3. Browse the full catalogue from [S
 - **Golden-angle planet map** — planets are laid out on a sunflower-spiral so dots never overlap, with a cycling focus highlight
 - **Terrain & water gradients** — each planet's circle is coloured with a linear gradient derived from its terrain tokens and surface-water percentage
 - **Detail page** — shows all stats, film appearances, and a surface circle; unknown fields render in italic
+- **Next planet** — from a detail page, jump to the next planet in the current list (search and favourites filters apply; wraps to the first)
 - **Pagination** — adaptive controls with page count derived from the filtered list
 - **Responsive** — mobile-friendly planet sizes, adaptive layout, and `prefers-reduced-motion` support
 
@@ -68,6 +69,7 @@ src/components/
 | `goldenAnglePosition.ts` | Sunflower-spiral x/y for map dots              |
 | `storage.ts`          | Type-safe `localStorage` read/write for string lists |
 | `listStatusMessage.ts`| Derives the correct empty/error status message    |
+| `nextPlanet.ts`       | Next planet id in a list, wrapping last to first  |
 
 ## Project structure
 
@@ -106,6 +108,14 @@ npm run build
 npm run preview
 ```
 
+## Deploy
+
+Pull requests targeting `main` are checked by [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint, format, unit tests, production build, and Cypress e2e). The site is published to GitHub Pages from `main` by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+Live URL: [https://annacv.github.io/swapi-planets/](https://annacv.github.io/swapi-planets/)
+
+**First-time setup** (once per repo): GitHub → **Settings** → **Pages** → **Build and deployment** → **Source**: GitHub Actions.
+
 ## Testing
 
 ### Unit tests (Vitest)
@@ -134,11 +144,13 @@ npm run test:e2e:ci
 
 ## Other scripts
 
-| Command              | Description                        |
-| -------------------- | ---------------------------------- |
-| `npm run lint`       | Lint with oxlint (auto-fix)        |
-| `npm run format`     | Format `src/` with oxfmt           |
-| `npm run type-check` | Type-check with `vue-tsc --build`  |
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run lint`         | Lint with oxlint (auto-fix)              |
+| `npm run lint:check`   | Lint without writing files (CI)          |
+| `npm run format`       | Format `src/` with oxfmt                 |
+| `npm run format:check` | Check formatting without writing (CI)    |
+| `npm run type-check`   | Type-check with `vue-tsc --build`        |
 
 ## API
 

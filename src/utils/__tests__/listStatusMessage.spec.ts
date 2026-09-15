@@ -19,17 +19,32 @@ describe('getListStatusMessage', () => {
 
   it('returns null when there are results to show', () => {
     expect(
-      getListStatusMessage({ listError: null, filteredCount: 5, showFavouritesOnly: false, favouriteCount: 0 }),
+      getListStatusMessage({
+        listError: null,
+        filteredCount: 5,
+        showFavouritesOnly: false,
+        favouriteCount: 0,
+      }),
     ).toBeNull()
   })
 
   it('returns the correct empty-state message for favourites vs search', () => {
     expect(
-      getListStatusMessage({ listError: null, filteredCount: 0, showFavouritesOnly: true, favouriteCount: 0 }),
+      getListStatusMessage({
+        listError: null,
+        filteredCount: 0,
+        showFavouritesOnly: true,
+        favouriteCount: 0,
+      }),
     ).toMatchObject({ message: 'No liked planets yet.', action: 'show-all' })
 
     expect(
-      getListStatusMessage({ listError: null, filteredCount: 0, showFavouritesOnly: false, favouriteCount: 0 }),
+      getListStatusMessage({
+        listError: null,
+        filteredCount: 0,
+        showFavouritesOnly: false,
+        favouriteCount: 0,
+      }),
     ).toMatchObject({ message: 'No planets found.', action: 'retry' })
   })
 })

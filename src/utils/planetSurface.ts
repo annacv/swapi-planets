@@ -114,6 +114,9 @@ export function planetSurfaceBackground(terrain: string, surfaceWater: string): 
   return `linear-gradient(155deg, ${stops.join(', ')})`
 }
 
-export function planetSurfaceStyle(terrain: string, surfaceWater: string): { backgroundImage: string } {
+export function planetSurfaceStyle(
+  terrain: string,
+  surfaceWater: string,
+): { backgroundImage: string } {
   return { backgroundImage: planetSurfaceBackground(terrain, surfaceWater) }
 }
