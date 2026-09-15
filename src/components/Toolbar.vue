@@ -53,7 +53,7 @@ function clearSearch() {
       <button
         type="button"
         role="switch"
-        class="relative h-[18px] w-[32px] rounded-full"
+        class="relative h-[18px] w-[32px] cursor-pointer rounded-full"
         :class="showFavouritesOnly ? 'bg-star' : 'bg-star/25'"
         :aria-checked="showFavouritesOnly"
         aria-labelledby="favourites-filter-label"

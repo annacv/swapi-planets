@@ -5,24 +5,41 @@ import { storeToRefs } from 'pinia'
 import Pagination from '@/components/Pagination.vue'
 import PlanetMap from '@/components/PlanetMap.vue'
 import PlanetsList from '@/components/PlanetsList.vue'
+import StatusMessage from '@/components/StatusMessage.vue'
 import Toolbar from '@/components/Toolbar.vue'
 import { usePlanetsStore } from '@/stores/planets'
+import { getListStatusMessage } from '@/utils/listStatusMessage'
 
 const planetsStore = usePlanetsStore()
-const { listLoading, listError, listedPlanets, allPlanets, filteredPlanets } = storeToRefs(planetsStore)
-const { loadCatalogue, setSearchQuery } = planetsStore
+const {
+  listLoading,
+  listError,
+  listedPlanets,
+  allPlanets,
+  filteredPlanets,
+  showFavouritesOnly,
+  favouriteIds,
+} = storeToRefs(planetsStore)
+const { loadCatalogue, setSearchQuery, toggleFavouritesFilter } = planetsStore
 
 const focusedPlanetId = ref<string | null>(null)
 const listPointerPlanetId = ref<string | null>(null)
 
-const listStatus = computed(() => {
-  if (listLoading.value) return 'loading'
-  if (listError.value) return 'error'
-  if (filteredPlanets.value.length === 0) return 'empty'
-  return 'ready'
-})
+const statusMessage = computed(() =>
+  getListStatusMessage({
+    listError: listError.value,
+    filteredCount: filteredPlanets.value.length,
+    showFavouritesOnly: showFavouritesOnly.value,
+    favouriteCount: favouriteIds.value.length,
+  }),
+)
 
-function retryList() {
+function onStatusAction() {
+  if (statusMessage.value?.action === 'show-all') {
+    if (showFavouritesOnly.value) toggleFavouritesFilter()
+    setSearchQuery('')
+    return
+  }
   setSearchQuery('')
   void loadCatalogue({ force: true })
 }
@@ -45,7 +62,7 @@ onMounted(() => {
       aria-label="Planet map"
     >
       <PlanetMap
-        v-if="listStatus === 'ready'"
+        v-if="!listLoading && !statusMessage"
         :planets="listedPlanets"
         :catalogue="allPlanets"
         :pointer-planet-id="listPointerPlanetId"
@@ -54,24 +71,17 @@ onMounted(() => {
     </section>
 
     <section class="flex flex-1 flex-col gap-6 px-6 pb-6 lg:col-start-2 lg:row-start-2 lg:px-10 lg:pr-16 xl:pr-32">
-      <p v-if="listStatus === 'loading'" class="mt-10 text-sm text-muted">Loading planets…</p>
+      <p v-if="listLoading" class="mt-10 text-sm text-muted">Loading planets…</p>
 
-      <template v-else-if="listStatus === 'error' || listStatus === 'empty'">
-        <div class="mt-10">
-          <p :class="listStatus === 'error' ? 'text-ember' : 'text-sm text-muted'">
-            {{ listStatus === 'error' ? listError : 'No planets found.' }}
-          </p>
-          <button
-            type="button"
-            class="mt-3 rounded-full bg-star px-3 py-1 text-sm text-galaxy"
-            @click="retryList"
-          >
-            Retry
-          </button>
-        </div>
-      </template>
+      <StatusMessage
+        v-else-if="statusMessage"
+        :message="statusMessage.message"
+        :action-label="statusMessage.actionLabel"
+        :tone="statusMessage.tone"
+        @action="onStatusAction"
+      />
 
-      <template v-if="listStatus === 'ready'">
+      <template v-else>
         <PlanetsList
           :focused-planet-id="focusedPlanetId"
           @pointer-planet="listPointerPlanetId = $event"

@@ -49,13 +49,6 @@ export const usePlanetsStore = defineStore('planets', () => {
     currentPage.value = Math.min(Math.max(page, 1), pageCount.value)
   }
 
-  function turnOffLikedIfEmpty() {
-    if (listLoading.value) return
-    if (showFavouritesOnly.value && filteredPlanets.value.length === 0) {
-      showFavouritesOnly.value = false
-    }
-  }
-
   function cachePlanet(planet: SwapiPlanet) {
     planetsById.value[planetIdFromUrl(planet.url)] = planet
   }
@@ -70,20 +63,17 @@ export const usePlanetsStore = defineStore('planets', () => {
       : [...favouriteIds.value, id]
     favouriteIds.value = next
     writeStringList(FAVOURITES_KEY, next)
-    turnOffLikedIfEmpty()
     setPage(currentPage.value)
   }
 
   function setSearchQuery(value: string) {
     searchQuery.value = value
     setPage(1)
-    turnOffLikedIfEmpty()
   }
 
   function toggleFavouritesFilter() {
     showFavouritesOnly.value = !showFavouritesOnly.value
     setPage(1)
-    turnOffLikedIfEmpty()
   }
 
   async function ensureFilms(): Promise<void> {
@@ -110,7 +100,6 @@ export const usePlanetsStore = defineStore('planets', () => {
       listError.value = error instanceof Error ? error.message : 'Failed to load planets'
     } finally {
       listLoading.value = false
-      turnOffLikedIfEmpty()
       setPage(currentPage.value)
     }
   }
