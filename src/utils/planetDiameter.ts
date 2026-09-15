@@ -19,7 +19,11 @@ export function maxKnownDiameter(planets: SwapiPlanet[]): number {
   return max
 }
 
-export function circleSizePx(diameter: string, maxDiameter: number, maxCirclePx = MAX_CIRCLE_PX): number {
+export function circleSizePx(
+  diameter: string,
+  maxDiameter: number,
+  maxCirclePx = MAX_CIRCLE_PX,
+): number {
   const parsed = parseDiameter(diameter)
   if (parsed === null || maxDiameter <= 0) return MIN_CIRCLE_PX
   const ratio = Math.sqrt(parsed / maxDiameter)

@@ -54,7 +54,9 @@ export const usePlanetsStore = defineStore('planets', () => {
   }
 
   function filmTitlesFor(planet: SwapiPlanet): string[] {
-    return planet.films.map((url) => filmTitlesByUrl.value[url]).filter((title): title is string => Boolean(title))
+    return planet.films
+      .map((url) => filmTitlesByUrl.value[url])
+      .filter((title): title is string => Boolean(title))
   }
 
   function toggleFavourite(id: string) {

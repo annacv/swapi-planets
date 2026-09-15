@@ -23,7 +23,9 @@ const { isFavourite, toggleFavourite } = usePlanetsStore()
     :style="{ width: `${props.size}px`, height: `${props.size}px`, lineHeight: 0, fontSize: 0 }"
     :aria-pressed="isFavourite(planetId)"
     :aria-label="
-      isFavourite(planetId) ? `Remove ${planetName} from favourites` : `Add ${planetName} to favourites`
+      isFavourite(planetId)
+        ? `Remove ${planetName} from favourites`
+        : `Add ${planetName} to favourites`
     "
     @click="toggleFavourite(planetId)"
   >

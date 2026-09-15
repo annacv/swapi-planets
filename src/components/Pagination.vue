@@ -13,7 +13,11 @@ const hasPrevious = computed(() => currentPage.value > 1)
 const hasNext = computed(() => currentPage.value < pageCount.value)
 
 const visible = computed(
-  () => !listLoading.value && !listError.value && !isSearching.value && filteredPlanets.value.length > 0,
+  () =>
+    !listLoading.value &&
+    !listError.value &&
+    !isSearching.value &&
+    filteredPlanets.value.length > 0,
 )
 </script>
 
@@ -26,7 +30,9 @@ const visible = computed(
     <nav class="flex items-center justify-end" aria-label="Pagination">
       <div
         class="hidden overflow-hidden transition-[max-width,margin,opacity] duration-300 ease-out motion-reduce:transition-none sm:block"
-        :class="hasPrevious ? 'mr-1.5 max-w-10 opacity-100' : 'pointer-events-none mr-0 max-w-0 opacity-0'"
+        :class="
+          hasPrevious ? 'mr-1.5 max-w-10 opacity-100' : 'pointer-events-none mr-0 max-w-0 opacity-0'
+        "
         :aria-hidden="!hasPrevious"
       >
         <button
@@ -57,7 +63,9 @@ const visible = computed(
 
       <div
         class="hidden overflow-hidden transition-[max-width,margin,opacity] duration-300 ease-out motion-reduce:transition-none sm:block"
-        :class="hasNext ? 'ml-1.5 max-w-10 opacity-100' : 'pointer-events-none ml-0 max-w-0 opacity-0'"
+        :class="
+          hasNext ? 'ml-1.5 max-w-10 opacity-100' : 'pointer-events-none ml-0 max-w-0 opacity-0'
+        "
         :aria-hidden="!hasNext"
       >
         <button

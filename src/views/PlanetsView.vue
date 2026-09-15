@@ -53,7 +53,9 @@ onMounted(() => {
   <main
     class="grid min-h-screen grid-cols-1 items-start gap-y-0 md:gap-y-6 lg:grid-cols-[minmax(0,1fr)_42rem] lg:grid-rows-[auto_minmax(0,1fr)]"
   >
-    <div class="px-6 pt-16 md:pt-10 lg:col-start-2 lg:row-start-1 lg:px-10 lg:pr-16 lg:pt-24 xl:pr-32">
+    <div
+      class="px-6 pt-16 md:pt-10 lg:col-start-2 lg:row-start-1 lg:px-10 lg:pr-16 lg:pt-24 xl:pr-32"
+    >
       <Toolbar />
     </div>
 
@@ -70,7 +72,9 @@ onMounted(() => {
       />
     </section>
 
-    <section class="flex flex-1 flex-col gap-6 px-6 pb-6 lg:col-start-2 lg:row-start-2 lg:px-10 lg:pr-16 xl:pr-32">
+    <section
+      class="flex flex-1 flex-col gap-6 px-6 pb-6 lg:col-start-2 lg:row-start-2 lg:px-10 lg:pr-16 xl:pr-32"
+    >
       <p v-if="listLoading" class="mt-10 text-sm text-muted">Loading planets…</p>
 
       <StatusMessage

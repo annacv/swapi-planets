@@ -22,7 +22,14 @@ describe('parseDiameter', () => {
 
 describe('maxKnownDiameter', () => {
   it('returns the largest valid diameter, ignoring invalid values and empty arrays', () => {
-    expect(maxKnownDiameter([stubPlanet('unknown'), stubPlanet('1000'), stubPlanet('5000'), stubPlanet('0')])).toBe(5000)
+    expect(
+      maxKnownDiameter([
+        stubPlanet('unknown'),
+        stubPlanet('1000'),
+        stubPlanet('5000'),
+        stubPlanet('0'),
+      ]),
+    ).toBe(5000)
     expect(maxKnownDiameter([])).toBe(0)
   })
 })
