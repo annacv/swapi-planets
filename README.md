@@ -108,6 +108,14 @@ npm run build
 npm run preview
 ```
 
+## Deploy
+
+Pull requests targeting `main` are checked by [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint, format, unit tests, production build, and Cypress e2e). The site is published to GitHub Pages from `main` by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+Live URL: [https://annacv.github.io/swapi-planets/](https://annacv.github.io/swapi-planets/)
+
+**First-time setup** (once per repo): GitHub → **Settings** → **Pages** → **Build and deployment** → **Source**: GitHub Actions.
+
 ## Testing
 
 ### Unit tests (Vitest)
@@ -136,11 +144,13 @@ npm run test:e2e:ci
 
 ## Other scripts
 
-| Command              | Description                        |
-| -------------------- | ---------------------------------- |
-| `npm run lint`       | Lint with oxlint (auto-fix)        |
-| `npm run format`     | Format `src/` with oxfmt           |
-| `npm run type-check` | Type-check with `vue-tsc --build`  |
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `npm run lint`         | Lint with oxlint (auto-fix)              |
+| `npm run lint:check`   | Lint without writing files (CI)          |
+| `npm run format`       | Format `src/` with oxfmt                 |
+| `npm run format:check` | Check formatting without writing (CI)    |
+| `npm run type-check`   | Type-check with `vue-tsc --build`        |
 
 ## API
 
