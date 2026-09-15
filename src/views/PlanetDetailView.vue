@@ -1,19 +1,27 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 
+import { planetIdFromUrl } from '@/api/swapi'
 import LikeButton from '@/components/LikeButton.vue'
 import { usePlanetsStore } from '@/stores/planets'
+import { nextPlanetId as findNextPlanetId } from '@/utils/nextPlanet'
 import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const route = useRoute()
 const store = usePlanetsStore()
-const { planetsById, detailLoading, detailError } = storeToRefs(store)
-const { loadPlanet, filmTitlesFor } = store
+const { planetsById, detailLoading, detailError, filteredPlanets } = storeToRefs(store)
+const { loadPlanet, loadCatalogue, filmTitlesFor } = store
 
 const planetId = computed(() => String(route.params.id))
 const planet = computed(() => planetsById.value[planetId.value])
+const nextPlanetId = computed(() =>
+  findNextPlanetId(
+    filteredPlanets.value.map((item) => planetIdFromUrl(item.url)),
+    planetId.value,
+  ),
+)
 
 const filmLine = computed(() => {
   if (!planet.value) return ''
@@ -42,19 +50,33 @@ watch(
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  void loadCatalogue()
+})
 </script>
 
 <template>
   <main class="flex min-h-screen flex-col px-8 md:px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
-    <p class="mb-6 lg:hidden">
+    <div class="mb-6 flex items-center justify-between gap-4 lg:hidden">
       <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
         ← Back to planets
       </RouterLink>
-    </p>
+      <RouterLink
+        v-if="nextPlanetId"
+        :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
+        class="ml-auto font-semibold text-ember hover:underline text-sm"
+      >
+        Next planet →
+      </RouterLink>
+    </div>
 
     <p v-if="detailLoading" class="mt-10 text-muted">Loading planet…</p>
 
-    <div v-else-if="detailError" class="mt-10 max-w-lg rounded-md border border-red-900 bg-red-950/40 p-4">
+    <div
+      v-else-if="detailError"
+      class="mt-10 max-w-lg rounded-md border border-red-900 bg-red-950/40 p-4"
+    >
       <p class="text-red-200">{{ detailError }}</p>
       <button
         type="button"
@@ -65,7 +87,10 @@ watch(
       </button>
     </div>
 
-    <article v-else-if="planet" class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
+    <article
+      v-else-if="planet"
+      class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24"
+    >
       <div
         class="mt-4 size-[min(38vw,78px)] shrink-0 rounded-full lg:size-[min(38vw,17.5rem)]"
         :style="planetSurfaceStyle(planet.terrain, planet.surface_water)"
@@ -95,10 +120,15 @@ watch(
 
         <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-10 lg:grid-cols-3">
           <div v-for="[label, value] in stats" :key="label">
-            <dt class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star">
+            <dt
+              class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
+            >
               {{ label }}
             </dt>
-            <dd class="mt-4 text-xl md:text-2xl font-light text-star" :class="{ italic: value === 'unknown' }">
+            <dd
+              class="mt-4 text-xl md:text-2xl font-light text-star"
+              :class="{ italic: value === 'unknown' }"
+            >
               {{ value }}
             </dd>
           </div>
@@ -106,10 +136,17 @@ watch(
       </div>
     </article>
 
-    <p class="py-8">
+    <div class="flex items-center justify-between gap-4 py-8">
       <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
         ← Back to planets
       </RouterLink>
-    </p>
+      <RouterLink
+        v-if="nextPlanetId"
+        :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
+        class="ml-auto font-semibold text-ember hover:underline text-sm"
+      >
+        Next planet →
+      </RouterLink>
+    </div>
   </main>
 </template>
