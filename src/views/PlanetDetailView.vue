@@ -45,7 +45,13 @@ watch(
 </script>
 
 <template>
-  <main class="flex min-h-screen flex-col px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
+  <main class="flex min-h-screen flex-col px-8 md:px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
+    <p class="mb-6 lg:hidden">
+      <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
+        ← Back to planets
+      </RouterLink>
+    </p>
+
     <p v-if="detailLoading" class="mt-10 text-muted">Loading planet…</p>
 
     <div v-else-if="detailError" class="mt-10 max-w-lg rounded-md border border-red-900 bg-red-950/40 p-4">
@@ -61,14 +67,14 @@ watch(
 
     <article v-else-if="planet" class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
       <div
-        class="mt-4 size-[min(38vw,17.5rem)] shrink-0 rounded-full"
+        class="mt-4 size-[min(38vw,78px)] shrink-0 rounded-full lg:size-[min(38vw,17.5rem)]"
         :style="planetSurfaceStyle(planet.terrain, planet.surface_water)"
         :aria-hidden="true"
       />
 
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-10 sm:gap-16">
-          <h1 class="text-4xl font-normal tracking-tight">{{ planet.name }}</h1>
+          <h1 class="text-3xl md:text-4xl font-normal tracking-tight">{{ planet.name }}</h1>
           <LikeButton :planet-id="planetId" :planet-name="planet.name" :size="32" />
         </div>
 
@@ -80,19 +86,19 @@ watch(
             Films
           </h2>
           <p
-            class="mt-4 text-2xl font-light leading-snug text-star"
+            class="mt-4 text-xl md:text-2xl font-light leading-snug text-star"
             :class="{ italic: !planet.films.length }"
           >
             {{ filmLine }}
           </p>
         </section>
 
-        <dl class="mt-10 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+        <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-10 lg:grid-cols-3">
           <div v-for="[label, value] in stats" :key="label">
             <dt class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star">
               {{ label }}
             </dt>
-            <dd class="mt-4 text-2xl font-light text-star" :class="{ italic: value === 'unknown' }">
+            <dd class="mt-4 text-xl md:text-2xl font-light text-star" :class="{ italic: value === 'unknown' }">
               {{ value }}
             </dd>
           </div>

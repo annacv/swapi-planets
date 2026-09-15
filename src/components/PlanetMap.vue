@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { planetIdFromUrl } from '@/api/swapi'
 import type { SwapiPlanet } from '@/api/types'
 import PlanetTooltip from '@/components/PlanetTooltip.vue'
-import { circleSizePx, MAX_CIRCLE_PX, maxKnownDiameter } from '@/utils/planetDiameter'
+import {
+  circleSizePx,
+  MAX_CIRCLE_MOBILE_PX,
+  MAX_CIRCLE_PX,
+  maxKnownDiameter,
+} from '@/utils/planetDiameter'
 import { goldenAnglePosition } from '@/utils/goldenAnglePosition'
 import { planetSurfaceStyle } from '@/utils/planetSurface'
 
@@ -19,7 +24,10 @@ const emit = defineEmits<{
 }>()
 
 const FOCUS_MS = 3000
+const LG_QUERY = '(min-width: 1024px)'
 
+const isLg = ref(typeof window !== 'undefined' ? window.matchMedia(LG_QUERY).matches : true)
+const maxCirclePx = computed(() => (isLg.value ? MAX_CIRCLE_PX : MAX_CIRCLE_MOBILE_PX))
 const maxDiameter = computed(() => maxKnownDiameter(props.catalogue))
 const pageKey = computed(() => props.planets.map((planet) => planetIdFromUrl(planet.url)).join('|'))
 const pointerIndex = ref<number | null>(null)
@@ -47,7 +55,7 @@ watch(() => props.pointerPlanetId, (id) => {
 })
 
 function circleStyle(planet: SwapiPlanet, index: number) {
-  const size = circleSizePx(planet.diameter, maxDiameter.value)
+  const size = circleSizePx(planet.diameter, maxDiameter.value, maxCirclePx.value)
   const { x, y } = goldenAnglePosition(index, props.planets.length)
 
   return {
@@ -55,12 +63,17 @@ function circleStyle(planet: SwapiPlanet, index: number) {
     '--planet-delay': `${index * 90}ms`,
     left: `${x * 100}%`,
     top: `${y * 100}%`,
-    zIndex: String(index === focusedIndex.value ? MAX_CIRCLE_PX + 1 : MAX_CIRCLE_PX - size),
+    zIndex: String(index === focusedIndex.value ? maxCirclePx.value + 1 : maxCirclePx.value - size),
     ...planetSurfaceStyle(planet.terrain, planet.surface_water),
   }
 }
 
 let focusTimer = 0
+let lgMedia: MediaQueryList | null = null
+
+function onLgChange(event: MediaQueryListEvent) {
+  isLg.value = event.matches
+}
 
 function stopFocusCycle() {
   window.clearInterval(focusTimer)
@@ -82,7 +95,16 @@ function startFocusCycle() {
 
 watch(pageKey, () => stopFocusCycle())
 
-onUnmounted(stopFocusCycle)
+onMounted(() => {
+  lgMedia = window.matchMedia(LG_QUERY)
+  isLg.value = lgMedia.matches
+  lgMedia.addEventListener('change', onLgChange)
+})
+
+onUnmounted(() => {
+  stopFocusCycle()
+  lgMedia?.removeEventListener('change', onLgChange)
+})
 </script>
 
 <template>
@@ -108,6 +130,7 @@ onUnmounted(stopFocusCycle)
           :index="focusedIndex"
           :count="planets.length"
           :max-diameter="maxDiameter"
+          :max-circle-px="maxCirclePx"
         />
       </div>
     </Transition>

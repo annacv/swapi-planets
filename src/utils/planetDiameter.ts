@@ -1,6 +1,7 @@
 import type { SwapiPlanet } from '@/api/types'
 
 export const MAX_CIRCLE_PX = 120
+export const MAX_CIRCLE_MOBILE_PX = 78
 export const MIN_CIRCLE_PX = 16
 
 export function parseDiameter(value: string): number | null {
@@ -18,9 +19,9 @@ export function maxKnownDiameter(planets: SwapiPlanet[]): number {
   return max
 }
 
-export function circleSizePx(diameter: string, maxDiameter: number): number {
+export function circleSizePx(diameter: string, maxDiameter: number, maxCirclePx = MAX_CIRCLE_PX): number {
   const parsed = parseDiameter(diameter)
   if (parsed === null || maxDiameter <= 0) return MIN_CIRCLE_PX
   const ratio = Math.sqrt(parsed / maxDiameter)
-  return Math.max(MIN_CIRCLE_PX, Math.round(ratio * MAX_CIRCLE_PX))
+  return Math.max(MIN_CIRCLE_PX, Math.round(ratio * maxCirclePx))
 }

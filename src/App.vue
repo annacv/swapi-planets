@@ -5,7 +5,10 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
 
 <template>
   <div class="relative min-h-dvh bg-galaxy font-sans text-star">
-    <div class="pointer-events-none absolute inset-0 z-0 overflow-clip" aria-hidden="true">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 z-0 h-dvh overflow-clip lg:inset-0 lg:h-auto"
+      aria-hidden="true"
+    >
       <img :src="galaxy" alt="" class="galaxy-spin absolute left-1/2 top-1/2 max-w-none select-none" />
     </div>
     <header class="absolute z-20 pointer-events-none px-4 py-2 w-full">

@@ -10,6 +10,7 @@ const props = defineProps<{
   index: number
   count: number
   maxDiameter: number
+  maxCirclePx?: number
 }>()
 
 const placement = computed(() => {
@@ -19,7 +20,7 @@ const placement = computed(() => {
 
 const style = computed(() => {
   if (!props.planet || props.index < 0) return {}
-  const size = circleSizePx(props.planet.diameter, props.maxDiameter)
+  const size = circleSizePx(props.planet.diameter, props.maxDiameter, props.maxCirclePx)
   const { x, y } = goldenAnglePosition(props.index, props.count)
   return {
     left: `${x * 100}%`,
