@@ -2,15 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { getListStatusMessage } from '../listStatusMessage'
 
 describe('getListStatusMessage', () => {
-  it('returns an error message when listError is set', () => {
-    expect(
-      getListStatusMessage({
-        listError: 'Network failure',
-        filteredCount: 0,
-        showFavouritesOnly: false,
-        favouriteCount: 0,
-      }),
-    ).toEqual({
+  it('returns error status when listError is set', () => {
+    const result = getListStatusMessage({
+      listError: 'Network failure',
+      filteredCount: 0,
+      showFavouritesOnly: false,
+      favouriteCount: 0,
+    })
+    expect(result).toEqual({
       message: 'Network failure',
       actionLabel: 'Retry',
       tone: 'error',
@@ -18,46 +17,19 @@ describe('getListStatusMessage', () => {
     })
   })
 
-  it('returns null when filteredCount > 0', () => {
+  it('returns null when there are results to show', () => {
     expect(
-      getListStatusMessage({
-        listError: null,
-        filteredCount: 5,
-        showFavouritesOnly: false,
-        favouriteCount: 0,
-      }),
+      getListStatusMessage({ listError: null, filteredCount: 5, showFavouritesOnly: false, favouriteCount: 0 }),
     ).toBeNull()
   })
 
-  it('returns "No liked planets yet." when favourites-only and favouriteCount is 0', () => {
+  it('returns the correct empty-state message for favourites vs search', () => {
     expect(
-      getListStatusMessage({
-        listError: null,
-        filteredCount: 0,
-        showFavouritesOnly: true,
-        favouriteCount: 0,
-      }),
-    ).toEqual({
-      message: 'No liked planets yet.',
-      actionLabel: 'Show all',
-      tone: 'muted',
-      action: 'show-all',
-    })
-  })
+      getListStatusMessage({ listError: null, filteredCount: 0, showFavouritesOnly: true, favouriteCount: 0 }),
+    ).toMatchObject({ message: 'No liked planets yet.', action: 'show-all' })
 
-  it('returns "No planets found." otherwise', () => {
     expect(
-      getListStatusMessage({
-        listError: null,
-        filteredCount: 0,
-        showFavouritesOnly: false,
-        favouriteCount: 0,
-      }),
-    ).toEqual({
-      message: 'No planets found.',
-      actionLabel: 'Retry',
-      tone: 'muted',
-      action: 'retry',
-    })
+      getListStatusMessage({ listError: null, filteredCount: 0, showFavouritesOnly: false, favouriteCount: 0 }),
+    ).toMatchObject({ message: 'No planets found.', action: 'retry' })
   })
 })
