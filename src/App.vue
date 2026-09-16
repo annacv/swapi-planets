@@ -16,14 +16,14 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
       />
     </div>
     <header class="absolute z-20 pointer-events-none px-4 py-2 w-full">
-      <a
+      <h1><a
         href="https://swapi.dev/"
         target="_blank"
         rel="noopener noreferrer"
         class="uppercase pointer-events-auto text-xs font-bold leading-none text-flame"
       >
         Star Wars planets via SWAPI
-      </a>
+      </a></h1>
     </header>
     <RouterView class="relative z-10" />
     <footer class="absolute bottom-0 z-20 pointer-events-none px-4 py-2 w-full">
