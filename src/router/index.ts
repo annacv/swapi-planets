@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import NotFoundView from '@/views/NotFoundView.vue'
 import PlanetDetailView from '@/views/PlanetDetailView.vue'
 import PlanetsView from '@/views/PlanetsView.vue'
 
@@ -11,10 +12,6 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/planets',
-    },
-    {
-      path: '/planets',
       name: 'planets',
       component: PlanetsView,
     },
@@ -22,6 +19,11 @@ const router = createRouter({
       path: '/planets/:id',
       name: 'planet-detail',
       component: PlanetDetailView,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView,
     },
   ],
 })

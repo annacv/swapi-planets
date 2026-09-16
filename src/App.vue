@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import logo from '@/assets/images/acondal.svg'
-import galaxy from '@/assets/images/bg-galaxy.svg'
+
+const galaxy = `${import.meta.env.BASE_URL}bg-galaxy.svg`
 </script>
 
 <template>
@@ -12,18 +13,23 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
       <img
         :src="galaxy"
         alt=""
+        width="3000"
+        height="1800"
+        fetchpriority="high"
         class="galaxy-spin absolute left-1/2 top-1/2 max-w-none select-none"
       />
     </div>
     <header class="absolute z-20 pointer-events-none px-4 py-2 w-full">
-      <a
-        href="https://swapi.dev/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="uppercase pointer-events-auto text-xs font-bold leading-none text-flame"
-      >
-        Star Wars planets via SWAPI
-      </a>
+      <h1>
+        <a
+          href="https://swapi.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="uppercase pointer-events-auto text-xs font-bold leading-none text-flame"
+        >
+          Star Wars planets via SWAPI
+        </a>
+      </h1>
     </header>
     <RouterView class="relative z-10" />
     <footer class="absolute bottom-0 z-20 pointer-events-none px-4 py-2 w-full">
@@ -34,7 +40,7 @@ import galaxy from '@/assets/images/bg-galaxy.svg'
         class="pointer-events-auto inline-flex items-center gap-1.5 text-xs text-star"
       >
         <span>By</span>
-        <img :src="logo" alt="author logo" class="h-4 w-auto" />
+        <img :src="logo" alt="author logo" width="32" height="16" class="h-4 w-8" />
       </a>
     </footer>
   </div>

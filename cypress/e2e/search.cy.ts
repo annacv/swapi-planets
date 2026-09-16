@@ -4,7 +4,7 @@ describe('Search', () => {
     cy.intercept('GET', 'https://swapi.dev/api/planets/?page=1', { fixture: 'planets-page1.json' }).as('getPage1')
     cy.intercept('GET', 'https://swapi.dev/api/planets/?page=2', { fixture: 'planets-page2.json' }).as('getPage2')
 
-    cy.visit('/planets')
+    cy.visit('/')
     cy.wait(['@getFilms', '@getPage1', '@getPage2'])
   })
 

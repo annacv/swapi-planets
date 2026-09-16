@@ -7,7 +7,7 @@ describe('Planet detail', () => {
   })
 
   it('navigates to the detail page when clicking a planet name', () => {
-    cy.visit('/planets')
+    cy.visit('/')
     cy.wait(['@getFilms', '@getPage1', '@getPage2'])
 
     cy.contains('a', 'Tatooine').click()
@@ -54,12 +54,11 @@ describe('Planet detail', () => {
     cy.wait('@getPlanet')
 
     cy.contains('Back to planets').click()
-    cy.url().should('include', '/planets')
-    cy.url().should('not.include', '/planets/1')
+    cy.location('pathname').should('eq', '/')
   })
 
   it('navigates to the next planet in the list', () => {
-    cy.visit('/planets')
+    cy.visit('/')
     cy.wait(['@getFilms', '@getPage1', '@getPage2'])
 
     cy.contains('a', 'Tatooine').click()
