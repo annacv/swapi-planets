@@ -142,14 +142,12 @@ onUnmounted(() => {
 
 <style scoped>
 .planet-dot {
-  --planet-size: var(--planet-target);
-  width: var(--planet-size);
-  height: var(--planet-size);
-  margin-left: calc(var(--planet-size) / -2);
-  margin-top: calc(var(--planet-size) / -2);
+  width: var(--planet-target);
+  height: var(--planet-target);
+  transform: translate(-50%, -50%) scale(1);
   box-shadow: 0 0 0 0 transparent;
   transition:
-    --planet-size 1.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 1.4s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.35s ease;
 }
 
@@ -166,7 +164,7 @@ onUnmounted(() => {
 }
 
 .planet-page-enter-from .planet-dot {
-  --planet-size: 0px;
+  transform: translate(-50%, -50%) scale(0);
 }
 
 .planet-page-enter-active .planet-dot {
@@ -179,6 +177,10 @@ onUnmounted(() => {
   .planet-page-enter-active .planet-dot {
     transition: none;
     transition-delay: 0ms;
+  }
+
+  .planet-page-enter-from .planet-dot {
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 </style>

@@ -59,7 +59,10 @@ onMounted(() => {
 <template>
   <main class="flex min-h-screen flex-col px-8 md:px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
     <div class="mb-6 flex items-center justify-between gap-4 lg:hidden">
-      <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
+      <RouterLink
+        :to="{ name: 'planets' }"
+        class="font-semibold text-ember hover:underline text-sm"
+      >
         ← Back to planets
       </RouterLink>
       <RouterLink
@@ -137,7 +140,10 @@ onMounted(() => {
     </article>
 
     <div class="flex items-center justify-between gap-4 py-8">
-      <RouterLink to="/planets" class="font-semibold text-ember hover:underline text-sm">
+      <RouterLink
+        :to="{ name: 'planets' }"
+        class="font-semibold text-ember hover:underline text-sm"
+      >
         ← Back to planets
       </RouterLink>
       <RouterLink
