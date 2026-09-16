@@ -7,7 +7,7 @@ import PlanetMap from '@/components/PlanetMap.vue'
 import PlanetsList from '@/components/PlanetsList.vue'
 import StatusMessage from '@/components/StatusMessage.vue'
 import Toolbar from '@/components/Toolbar.vue'
-import { usePlanetsStore } from '@/stores/planets'
+import { PAGE_SIZE, usePlanetsStore } from '@/stores/planets'
 import { getListStatusMessage } from '@/utils/listStatusMessage'
 
 const planetsStore = usePlanetsStore()
@@ -72,8 +72,11 @@ onMounted(() => {
       />
     </section>
 
+    <!-- Reserve one page of list height during loading to cut Cumulative Layout Shift (CLS)
+         when rows mount. 2.25rem is the row height; 1rem is `gap-4` so the box is not short on mobile. -->
     <section
       class="flex flex-1 flex-col gap-6 px-6 pb-6 lg:col-start-2 lg:row-start-2 lg:px-10 lg:pr-16 xl:pr-32"
+      :style="{ minHeight: `calc(${PAGE_SIZE} * 2.25rem + ${PAGE_SIZE - 1} * 1rem)` }"
     >
       <p v-if="listLoading" class="mt-10 text-sm text-muted">Loading planets…</p>
 
