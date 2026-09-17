@@ -20,7 +20,7 @@ const galaxy = `${import.meta.env.BASE_URL}bg-galaxy.svg`
       />
     </div>
     <header class="absolute z-20 pointer-events-none px-4 py-2 w-full">
-      <h1>
+      <h1 class="text-center md:text-left display-flex justify-center md:justify-start">
         <a
           href="https://swapi.dev/"
           target="_blank"

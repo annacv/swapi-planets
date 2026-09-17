@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 
@@ -11,7 +11,7 @@ import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const route = useRoute()
 const store = usePlanetsStore()
-const { planetsById, detailLoading, detailError, filteredPlanets } = storeToRefs(store)
+const { planetsById, detailLoading, detailError, filteredPlanets, allPlanets } = storeToRefs(store)
 const { loadPlanet, loadCatalogue, filmTitlesFor } = store
 
 const planetId = computed(() => String(route.params.id))
@@ -46,33 +46,35 @@ const stats = computed(() => {
 watch(
   planetId,
   (id) => {
-    void loadPlanet(id)
+    void loadPlanet(id).then((loaded) => {
+      // Catalogue powers "Next planet"; load after the detail paints so it
+      // stays off the LCP critical path on cold detail visits.
+      if (loaded && allPlanets.value.length === 0) {
+        void loadCatalogue()
+      }
+    })
   },
   { immediate: true },
 )
-
-onMounted(() => {
-  void loadCatalogue()
-})
 </script>
 
 <template>
-  <main class="flex min-h-screen flex-col px-8 md:px-16 pb-10 pt-10 lg:pt-24 xl:px-32">
-    <div class="mb-6 flex items-center justify-between gap-4 lg:hidden">
+  <main class="flex min-h-screen flex-col px-8 pb-10 pt-10 md:px-16 lg:pt-24 xl:px-32">
+    <nav class="my-6 flex items-center justify-between gap-4 lg:hidden" aria-label="Planet navigation">
       <RouterLink
         :to="{ name: 'planets' }"
-        class="font-semibold text-ember hover:underline text-sm"
+        class="text-sm font-semibold text-ember hover:underline"
       >
         ← Back to planets
       </RouterLink>
       <RouterLink
         v-if="nextPlanetId"
         :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
-        class="ml-auto font-semibold text-ember hover:underline text-sm"
+        class="text-sm font-semibold text-ember hover:underline"
       >
         Next planet →
       </RouterLink>
-    </div>
+    </nav>
 
     <p v-if="detailLoading" class="mt-10 text-muted">Loading planet…</p>
 
@@ -90,69 +92,68 @@ onMounted(() => {
       </button>
     </div>
 
-    <article
-      v-else-if="planet"
-      class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24"
-    >
-      <div
-        class="mt-4 size-[min(38vw,78px)] shrink-0 rounded-full lg:size-[min(38vw,17.5rem)]"
-        :style="planetSurfaceStyle(planet.terrain, planet.surface_water)"
-        :aria-hidden="true"
-      />
+    <template v-else-if="planet">
+      <article class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16 xl:gap-24">
+        <div
+          class="mt-4 size-[min(38vw,78px)] shrink-0 rounded-full lg:size-[min(38vw,17.5rem)]"
+          :style="planetSurfaceStyle(planet.terrain, planet.surface_water)"
+          :aria-hidden="true"
+        />
 
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-10 sm:gap-16">
-          <h1 class="text-3xl md:text-4xl font-normal tracking-tight">{{ planet.name }}</h1>
-          <LikeButton :planet-id="planetId" :planet-name="planet.name" :size="32" />
-        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-10 sm:gap-16">
+            <h1 class="text-3xl font-normal tracking-tight md:text-4xl">{{ planet.name }}</h1>
+            <LikeButton :planet-id="planetId" :planet-name="planet.name" :size="32" />
+          </div>
 
-        <section class="mt-8" aria-labelledby="films-heading">
-          <h2
-            id="films-heading"
-            class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
-          >
-            Films
-          </h2>
-          <p
-            class="mt-4 text-xl md:text-2xl font-light leading-snug text-star"
-            :class="{ italic: !planet.films.length }"
-          >
-            {{ filmLine }}
-          </p>
-        </section>
-
-        <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-10 lg:grid-cols-3">
-          <div v-for="[label, value] in stats" :key="label">
-            <dt
+          <section class="mt-8" aria-labelledby="films-heading">
+            <h2
+              id="films-heading"
               class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
             >
-              {{ label }}
-            </dt>
-            <dd
-              class="mt-4 text-xl md:text-2xl font-light text-star"
-              :class="{ italic: value === 'unknown' }"
+              Films
+            </h2>
+            <p
+              class="mt-4 text-xl font-light leading-snug text-star md:text-2xl"
+              :class="{ italic: !planet.films.length }"
             >
-              {{ value }}
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </article>
+              {{ filmLine }}
+            </p>
+          </section>
 
-    <div class="flex items-center justify-between gap-4 py-8">
-      <RouterLink
-        :to="{ name: 'planets' }"
-        class="font-semibold text-ember hover:underline text-sm"
-      >
-        ← Back to planets
-      </RouterLink>
-      <RouterLink
-        v-if="nextPlanetId"
-        :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
-        class="ml-auto font-semibold text-ember hover:underline text-sm"
-      >
-        Next planet →
-      </RouterLink>
-    </div>
+          <dl class="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-10 lg:grid-cols-3">
+            <div v-for="[label, value] in stats" :key="label">
+              <dt
+                class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
+              >
+                {{ label }}
+              </dt>
+              <dd
+                class="mt-4 text-xl font-light text-star md:text-2xl"
+                :class="{ italic: value === 'unknown' }"
+              >
+                {{ value }}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+
+      <nav class="flex items-center justify-between gap-4 py-8" aria-label="Planet navigation">
+        <RouterLink
+          :to="{ name: 'planets' }"
+          class="text-sm font-semibold text-ember hover:underline"
+        >
+          ← Back to planets
+        </RouterLink>
+        <RouterLink
+          v-if="nextPlanetId"
+          :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
+          class="text-sm font-semibold text-ember hover:underline"
+        >
+          Next planet →
+        </RouterLink>
+      </nav>
+    </template>
   </main>
 </template>

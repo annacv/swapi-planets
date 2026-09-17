@@ -246,6 +246,31 @@ describe('loadPlanet', () => {
     expect(await store.loadPlanet('999')).toBeNull()
     expect(store.detailError).toBe('Not found')
   })
+
+  it('dedupes concurrent film fetches when loading planet and catalogue together', async () => {
+    let resolveFilms!: (films: SwapiFilm[]) => void
+    mockedGetFilms.mockReturnValue(
+      new Promise<SwapiFilm[]>((resolve) => {
+        resolveFilms = resolve
+      }),
+    )
+    const film = makeFilm(1)
+    mockedGetPlanet.mockResolvedValue(
+      makePlanet({ url: 'https://swapi.dev/api/planets/5/', films: [film.url] }),
+    )
+    mockedGetAllPlanets.mockResolvedValue(makePlanets(2))
+
+    const store = usePlanetsStore()
+    const planetPromise = store.loadPlanet('5')
+    const cataloguePromise = store.loadCatalogue()
+
+    expect(mockedGetFilms).toHaveBeenCalledOnce()
+    resolveFilms([film])
+
+    await Promise.all([planetPromise, cataloguePromise])
+    expect(mockedGetFilms).toHaveBeenCalledOnce()
+    expect(store.filmTitlesFor(store.planetsById['5']!)).toEqual(['Film 1'])
+  })
 })
 
 // ---------------------------------------------------------------------------

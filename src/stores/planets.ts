@@ -78,11 +78,23 @@ export const usePlanetsStore = defineStore('planets', () => {
     setPage(1)
   }
 
+  let filmsRequest: Promise<void> | null = null
+
   async function ensureFilms(): Promise<void> {
     if (Object.keys(filmTitlesByUrl.value).length > 0) return
 
-    const films = await getFilms()
-    filmTitlesByUrl.value = Object.fromEntries(films.map((film) => [film.url, film.title]))
+    if (!filmsRequest) {
+      filmsRequest = getFilms()
+        .then((films) => {
+          filmTitlesByUrl.value = Object.fromEntries(films.map((film) => [film.url, film.title]))
+        })
+        .catch((error) => {
+          filmsRequest = null
+          throw error
+        })
+    }
+
+    await filmsRequest
   }
 
   async function loadCatalogue({ force = false } = {}): Promise<void> {
