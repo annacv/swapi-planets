@@ -1,4 +1,11 @@
-import type { SwapiFilm, SwapiFilmsPage, SwapiPlanet, SwapiPlanetsPage } from './types'
+import type {
+  SwapiFilm,
+  SwapiFilmsPage,
+  SwapiPeoplePage,
+  SwapiPerson,
+  SwapiPlanet,
+  SwapiPlanetsPage,
+} from './types'
 
 const SWAPI_BASE_URL = 'https://swapi.dev/api'
 
@@ -50,4 +57,22 @@ export function getPlanet(id: string | number): Promise<SwapiPlanet> {
 export async function getFilms(): Promise<SwapiFilm[]> {
   const payload = await fetchJson<SwapiFilmsPage>('/films/')
   return payload.results
+}
+
+export async function getPeople(): Promise<SwapiPerson[]> {
+  const firstPage = await fetchJson<SwapiPeoplePage>('/people/')
+  const pageSize = firstPage.results.length || 10
+  const totalPages = Math.ceil(firstPage.count / pageSize)
+
+  if (totalPages <= 1) {
+    return firstPage.results
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      fetchJson<SwapiPeoplePage>(`/people/?page=${index + 2}`),
+    ),
+  )
+
+  return firstPage.results.concat(...remainingPages.map((page) => page.results))
 }

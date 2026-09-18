@@ -13,7 +13,7 @@ import { planetSurfaceStyle } from '@/utils/planetSurface'
 const route = useRoute()
 const store = usePlanetsStore()
 const { planetsById, detailLoading, detailError, filteredPlanets, allPlanets } = storeToRefs(store)
-const { loadPlanet, loadCatalogue, filmTitlesFor } = store
+const { loadPlanet, loadCatalogue, filmTitlesFor, residentNamesFor } = store
 
 const planetId = computed(() => String(route.params.id))
 const planet = computed(() => planetsById.value[planetId.value])
@@ -29,6 +29,12 @@ const filmLine = computed(() => {
   if (!planet.value) return ''
   const titles = filmTitlesFor(planet.value)
   return titles.length ? titles.join(', ') : 'No films listed'
+})
+
+const residentLine = computed(() => {
+  if (!planet.value) return ''
+  const names = residentNamesFor(planet.value)
+  return names.length ? names.join(', ') : 'No known residents'
 })
 
 const stats = computed(() => {
@@ -114,6 +120,21 @@ watch(
               :class="{ italic: !planet.films.length }"
             >
               {{ filmLine }}
+            </p>
+          </section>
+
+          <section class="mt-8" aria-labelledby="residents-heading">
+            <h2
+              id="residents-heading"
+              class="border-b border-star pb-2 text-sm font-normal uppercase tracking-wide text-star"
+            >
+              Residents
+            </h2>
+            <p
+              class="mt-4 text-xl font-light leading-snug text-star md:text-2xl"
+              :class="{ italic: !planet.residents.length }"
+            >
+              {{ residentLine }}
             </p>
           </section>
 
