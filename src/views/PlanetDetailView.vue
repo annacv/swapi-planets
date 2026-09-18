@@ -7,6 +7,7 @@ import { planetIdFromUrl } from '@/api/swapi'
 import LikeButton from '@/components/LikeButton.vue'
 import { usePlanetsStore } from '@/stores/planets'
 import { browsePlanetId } from '@/utils/browsePlanet'
+import { setPageSlide } from '@/utils/pageSlide'
 import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const route = useRoute()
@@ -19,9 +20,7 @@ const planet = computed(() => planetsById.value[planetId.value])
 const filteredPlanetIds = computed(() =>
   filteredPlanets.value.map((item) => planetIdFromUrl(item.url)),
 )
-const nextPlanetId = computed(() =>
-  browsePlanetId(filteredPlanetIds.value, planetId.value, 'next'),
-)
+const nextPlanetId = computed(() => browsePlanetId(filteredPlanetIds.value, planetId.value, 'next'))
 const previousPlanetId = computed(() =>
   browsePlanetId(filteredPlanetIds.value, planetId.value, 'previous'),
 )
@@ -67,6 +66,7 @@ watch(
       <RouterLink
         :to="{ name: 'planets' }"
         class="text-sm font-semibold text-ember hover:underline"
+        @click="setPageSlide('left')"
       >
         ← Back to planets
       </RouterLink>
@@ -142,6 +142,7 @@ watch(
         <RouterLink
           :to="{ name: 'planets' }"
           class="hidden text-sm font-semibold text-ember hover:underline lg:inline"
+          @click="setPageSlide('left')"
         >
           ← Back to planets
         </RouterLink>
@@ -150,6 +151,7 @@ watch(
             v-if="previousPlanetId"
             :to="{ name: 'planet-detail', params: { id: previousPlanetId } }"
             class="text-sm font-semibold text-ember hover:underline"
+            @click="setPageSlide('left')"
           >
             ← Previous planet
           </RouterLink>
@@ -157,6 +159,7 @@ watch(
             v-if="nextPlanetId"
             :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
             class="text-sm font-semibold text-ember hover:underline"
+            @click="setPageSlide('right')"
           >
             Next planet →
           </RouterLink>
