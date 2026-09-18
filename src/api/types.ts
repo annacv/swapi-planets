@@ -27,5 +27,11 @@ export interface SwapiFilm {
   url: string
 }
 
+export interface SwapiPerson {
+  name: string
+  url: string
+}
+
 export type SwapiPlanetsPage = SwapiListResponse<SwapiPlanet>
 export type SwapiFilmsPage = SwapiListResponse<SwapiFilm>
+export type SwapiPeoplePage = SwapiListResponse<SwapiPerson>

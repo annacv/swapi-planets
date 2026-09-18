@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { usePlanetsStore, PAGE_SIZE } from '../planets'
-import type { SwapiPlanet, SwapiFilm } from '@/api/types'
+import type { SwapiPlanet, SwapiFilm, SwapiPerson } from '@/api/types'
 
 function makePlanet(overrides: Partial<SwapiPlanet> = {}): SwapiPlanet {
   const id = overrides.url?.match(/\/planets\/(\d+)/)?.[1] ?? '1'
@@ -34,19 +34,25 @@ function makeFilm(index: number): SwapiFilm {
   return { title: `Film ${index}`, url: `https://swapi.dev/api/films/${index}/` }
 }
 
+function makePerson(index: number): SwapiPerson {
+  return { name: `Person ${index}`, url: `https://swapi.dev/api/people/${index}/` }
+}
+
 vi.mock('@/api/swapi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/swapi')>()
   return {
     ...actual,
     getAllPlanets: vi.fn<typeof actual.getAllPlanets>(),
     getFilms: vi.fn<typeof actual.getFilms>(),
+    getPeople: vi.fn<typeof actual.getPeople>(),
     getPlanet: vi.fn<typeof actual.getPlanet>(),
   }
 })
 
-import { getAllPlanets, getFilms, getPlanet } from '@/api/swapi'
+import { getAllPlanets, getFilms, getPeople, getPlanet } from '@/api/swapi'
 const mockedGetAllPlanets = vi.mocked(getAllPlanets)
 const mockedGetFilms = vi.mocked(getFilms)
+const mockedGetPeople = vi.mocked(getPeople)
 const mockedGetPlanet = vi.mocked(getPlanet)
 
 beforeEach(() => {
@@ -54,6 +60,7 @@ beforeEach(() => {
   setActivePinia(createPinia())
   vi.resetAllMocks()
   mockedGetFilms.mockResolvedValue([])
+  mockedGetPeople.mockResolvedValue([])
 })
 
 // ---------------------------------------------------------------------------
@@ -169,6 +176,24 @@ describe('filmTitlesFor', () => {
 })
 
 // ---------------------------------------------------------------------------
+// residentNamesFor
+// ---------------------------------------------------------------------------
+describe('residentNamesFor', () => {
+  it('maps resident URLs to names and filters out missing ones', async () => {
+    const person1 = makePerson(1)
+    mockedGetPeople.mockResolvedValue([person1])
+    mockedGetAllPlanets.mockResolvedValue([])
+    const store = usePlanetsStore()
+    await store.loadCatalogue()
+
+    const planet = makePlanet({
+      residents: [person1.url, 'https://swapi.dev/api/people/99/'],
+    })
+    expect(store.residentNamesFor(planet)).toEqual(['Person 1'])
+  })
+})
+
+// ---------------------------------------------------------------------------
 // loadCatalogue
 // ---------------------------------------------------------------------------
 describe('loadCatalogue', () => {
@@ -247,16 +272,27 @@ describe('loadPlanet', () => {
     expect(store.detailError).toBe('Not found')
   })
 
-  it('dedupes concurrent film fetches when loading planet and catalogue together', async () => {
+  it('dedupes concurrent film and people fetches when loading planet and catalogue together', async () => {
     let resolveFilms!: (films: SwapiFilm[]) => void
     mockedGetFilms.mockReturnValue(
       new Promise<SwapiFilm[]>((resolve) => {
         resolveFilms = resolve
       }),
     )
+    let resolvePeople!: (people: SwapiPerson[]) => void
+    mockedGetPeople.mockReturnValue(
+      new Promise<SwapiPerson[]>((resolve) => {
+        resolvePeople = resolve
+      }),
+    )
     const film = makeFilm(1)
+    const person = makePerson(1)
     mockedGetPlanet.mockResolvedValue(
-      makePlanet({ url: 'https://swapi.dev/api/planets/5/', films: [film.url] }),
+      makePlanet({
+        url: 'https://swapi.dev/api/planets/5/',
+        films: [film.url],
+        residents: [person.url],
+      }),
     )
     mockedGetAllPlanets.mockResolvedValue(makePlanets(2))
 
@@ -265,11 +301,15 @@ describe('loadPlanet', () => {
     const cataloguePromise = store.loadCatalogue()
 
     expect(mockedGetFilms).toHaveBeenCalledOnce()
+    expect(mockedGetPeople).toHaveBeenCalledOnce()
     resolveFilms([film])
+    resolvePeople([person])
 
     await Promise.all([planetPromise, cataloguePromise])
     expect(mockedGetFilms).toHaveBeenCalledOnce()
+    expect(mockedGetPeople).toHaveBeenCalledOnce()
     expect(store.filmTitlesFor(store.planetsById['5']!)).toEqual(['Film 1'])
+    expect(store.residentNamesFor(store.planetsById['5']!)).toEqual(['Person 1'])
   })
 })
 

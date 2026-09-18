@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { getAllPlanets, getFilms, getPlanet, planetIdFromUrl } from '@/api/swapi'
+import { getAllPlanets, getFilms, getPeople, getPlanet, planetIdFromUrl } from '@/api/swapi'
 import type { SwapiPlanet } from '@/api/types'
 import { pageCountFor, pageSlice } from '@/utils/pagination'
 import { readStringList, writeStringList } from '@/utils/storage'
@@ -11,6 +11,7 @@ export const PAGE_SIZE = 10
 
 export const usePlanetsStore = defineStore('planets', () => {
   const filmTitlesByUrl = ref<Record<string, string>>({})
+  const residentNamesByUrl = ref<Record<string, string>>({})
   const allPlanets = ref<SwapiPlanet[]>([])
   const planetsById = ref<Record<string, SwapiPlanet>>({})
   const currentPage = ref(1)
@@ -59,6 +60,12 @@ export const usePlanetsStore = defineStore('planets', () => {
       .filter((title): title is string => Boolean(title))
   }
 
+  function residentNamesFor(planet: SwapiPlanet): string[] {
+    return planet.residents
+      .map((url) => residentNamesByUrl.value[url])
+      .filter((name): name is string => Boolean(name))
+  }
+
   function toggleFavourite(id: string) {
     const next = isFavourite(id)
       ? favouriteIds.value.filter((favouriteId) => favouriteId !== id)
@@ -97,6 +104,27 @@ export const usePlanetsStore = defineStore('planets', () => {
     await filmsRequest
   }
 
+  let peopleRequest: Promise<void> | null = null
+
+  async function ensurePeople(): Promise<void> {
+    if (Object.keys(residentNamesByUrl.value).length > 0) return
+
+    if (!peopleRequest) {
+      peopleRequest = getPeople()
+        .then((people) => {
+          residentNamesByUrl.value = Object.fromEntries(
+            people.map((person) => [person.url, person.name]),
+          )
+        })
+        .catch((error) => {
+          peopleRequest = null
+          throw error
+        })
+    }
+
+    await peopleRequest
+  }
+
   async function loadCatalogue({ force = false } = {}): Promise<void> {
     listError.value = null
 
@@ -106,7 +134,7 @@ export const usePlanetsStore = defineStore('planets', () => {
 
     listLoading.value = true
     try {
-      await ensureFilms()
+      await Promise.all([ensureFilms(), ensurePeople()])
       const planets = await getAllPlanets()
       allPlanets.value = planets
       planets.forEach(cachePlanet)
@@ -127,7 +155,7 @@ export const usePlanetsStore = defineStore('planets', () => {
 
     detailLoading.value = true
     try {
-      await ensureFilms()
+      await Promise.all([ensureFilms(), ensurePeople()])
       const planet = await getPlanet(id)
       cachePlanet(planet)
       return planet
@@ -155,6 +183,7 @@ export const usePlanetsStore = defineStore('planets', () => {
     isSearching,
     planetsById,
     filmTitlesFor,
+    residentNamesFor,
     isFavourite,
     toggleFavourite,
     setPage,
