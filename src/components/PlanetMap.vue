@@ -11,6 +11,7 @@ import {
   maxKnownDiameter,
 } from '@/utils/planetDiameter'
 import { goldenAnglePosition } from '@/utils/goldenAnglePosition'
+import { setPageSlide } from '@/utils/pageSlide'
 import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const props = defineProps<{
@@ -119,6 +120,7 @@ onUnmounted(() => {
           :key="planet.url"
           :to="{ name: 'planet-detail', params: { id: planetIdFromUrl(planet.url) } }"
           class="planet-dot absolute rounded-full"
+          @click="setPageSlide('right')"
           :class="index === focusedIndex ? 'planet-dot-active' : undefined"
           :style="circleStyle(planet, index)"
           :aria-label="planet.name"

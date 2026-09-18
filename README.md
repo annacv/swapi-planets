@@ -10,7 +10,7 @@ A Star Wars planets explorer built with Vue 3. Browse the full catalogue from [S
 - **Golden-angle planet map** — planets are laid out on a sunflower-spiral so dots never overlap, with a cycling focus highlight
 - **Terrain & water gradients** — each planet's circle is coloured with a linear gradient derived from its terrain tokens and surface-water percentage
 - **Detail page** — shows all stats, film appearances, and a surface circle; unknown fields render in italic
-- **Next planet** — from a detail page, jump to the next planet in the current list (search and favourites filters apply; wraps to the first)
+- **Browse planets** — from a detail page, jump to the previous or next planet in the current list (search and favourites filters apply; wraps at both ends)
 - **Pagination** — adaptive controls with page count derived from the filtered list
 - **Responsive** — mobile-friendly planet sizes, adaptive layout, and `prefers-reduced-motion` support
 
@@ -69,7 +69,7 @@ src/components/
 | `goldenAnglePosition.ts` | Sunflower-spiral x/y for map dots              |
 | `storage.ts`          | Type-safe `localStorage` read/write for string lists |
 | `listStatusMessage.ts`| Derives the correct empty/error status message    |
-| `nextPlanet.ts`       | Next planet id in a list, wrapping last to first  |
+| `browsePlanet.ts`     | Adjacent planet id in a list, wrapping at both ends |
 
 ## Project structure
 

@@ -1,7 +1,35 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+
+import { planetIdFromUrl } from '@/api/swapi'
 import logo from '@/assets/images/acondal.svg'
+import { usePlanetsStore } from '@/stores/planets'
+import { consumePageSlideFromClick, pageSlideDirection } from '@/utils/pageSlide'
 
 const galaxy = `${import.meta.env.BASE_URL}bg-galaxy.svg`
+const router = useRouter()
+const { filteredPlanets } = storeToRefs(usePlanetsStore())
+
+const slideEnabled = ref(false)
+const slideDirection = ref<'left' | 'right'>('right')
+const slideName = computed(() => (slideEnabled.value ? `slide-${slideDirection.value}` : ''))
+
+router.beforeEach((to, from) => {
+  if (!from.matched.length) return
+
+  slideEnabled.value = true
+  slideDirection.value =
+    consumePageSlideFromClick() ??
+    pageSlideDirection({
+      toName: to.name,
+      fromName: from.name,
+      toPlanetId: to.params.id != null ? String(to.params.id) : undefined,
+      fromPlanetId: from.params.id != null ? String(from.params.id) : undefined,
+      orderedPlanetIds: filteredPlanets.value.map((planet) => planetIdFromUrl(planet.url)),
+    })
+})
 </script>
 
 <template>
@@ -31,7 +59,13 @@ const galaxy = `${import.meta.env.BASE_URL}bg-galaxy.svg`
         </a>
       </h1>
     </header>
-    <RouterView class="relative z-10" />
+    <div class="relative z-10 min-h-dvh overflow-x-clip">
+      <RouterView v-slot="{ Component, route }">
+        <Transition :name="slideName" :css="slideEnabled">
+          <component :is="Component" v-if="Component" :key="route.path" />
+        </Transition>
+      </RouterView>
+    </div>
     <footer class="absolute bottom-0 z-20 pointer-events-none px-4 py-2 w-full">
       <a
         href="https://github.com/annacv"

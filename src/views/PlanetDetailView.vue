@@ -6,7 +6,8 @@ import { useRoute } from 'vue-router'
 import { planetIdFromUrl } from '@/api/swapi'
 import LikeButton from '@/components/LikeButton.vue'
 import { usePlanetsStore } from '@/stores/planets'
-import { nextPlanetId as findNextPlanetId } from '@/utils/nextPlanet'
+import { browsePlanetId } from '@/utils/browsePlanet'
+import { setPageSlide } from '@/utils/pageSlide'
 import { planetSurfaceStyle } from '@/utils/planetSurface'
 
 const route = useRoute()
@@ -16,11 +17,12 @@ const { loadPlanet, loadCatalogue, filmTitlesFor } = store
 
 const planetId = computed(() => String(route.params.id))
 const planet = computed(() => planetsById.value[planetId.value])
-const nextPlanetId = computed(() =>
-  findNextPlanetId(
-    filteredPlanets.value.map((item) => planetIdFromUrl(item.url)),
-    planetId.value,
-  ),
+const filteredPlanetIds = computed(() =>
+  filteredPlanets.value.map((item) => planetIdFromUrl(item.url)),
+)
+const nextPlanetId = computed(() => browsePlanetId(filteredPlanetIds.value, planetId.value, 'next'))
+const previousPlanetId = computed(() =>
+  browsePlanetId(filteredPlanetIds.value, planetId.value, 'previous'),
 )
 
 const filmLine = computed(() => {
@@ -47,7 +49,7 @@ watch(
   planetId,
   (id) => {
     void loadPlanet(id).then((loaded) => {
-      // Catalogue powers "Next planet"; load after the detail paints so it
+      // Catalogue powers previous/next planet; load after the detail paints so it
       // stays off the LCP critical path on cold detail visits.
       if (loaded && allPlanets.value.length === 0) {
         void loadCatalogue()
@@ -60,19 +62,13 @@ watch(
 
 <template>
   <main class="flex min-h-screen flex-col px-8 pb-10 pt-10 md:px-16 lg:pt-24 xl:px-32">
-    <nav class="my-6 flex items-center justify-between gap-4 lg:hidden" aria-label="Planet navigation">
+    <nav class="my-6 lg:hidden" aria-label="Back to planets">
       <RouterLink
         :to="{ name: 'planets' }"
         class="text-sm font-semibold text-ember hover:underline"
+        @click="setPageSlide('left')"
       >
         ← Back to planets
-      </RouterLink>
-      <RouterLink
-        v-if="nextPlanetId"
-        :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
-        class="text-sm font-semibold text-ember hover:underline"
-      >
-        Next planet →
       </RouterLink>
     </nav>
 
@@ -139,20 +135,35 @@ watch(
         </div>
       </article>
 
-      <nav class="flex items-center justify-between gap-4 py-8" aria-label="Planet navigation">
+      <nav
+        class="flex flex-wrap items-center justify-between gap-4 py-8"
+        aria-label="Planet navigation"
+      >
         <RouterLink
           :to="{ name: 'planets' }"
-          class="text-sm font-semibold text-ember hover:underline"
+          class="hidden text-sm font-semibold text-ember hover:underline lg:inline"
+          @click="setPageSlide('left')"
         >
           ← Back to planets
         </RouterLink>
-        <RouterLink
-          v-if="nextPlanetId"
-          :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
-          class="text-sm font-semibold text-ember hover:underline"
-        >
-          Next planet →
-        </RouterLink>
+        <div class="flex w-full items-center justify-between gap-6 lg:w-auto">
+          <RouterLink
+            v-if="previousPlanetId"
+            :to="{ name: 'planet-detail', params: { id: previousPlanetId } }"
+            class="text-sm font-semibold text-ember hover:underline"
+            @click="setPageSlide('left')"
+          >
+            ← Previous planet
+          </RouterLink>
+          <RouterLink
+            v-if="nextPlanetId"
+            :to="{ name: 'planet-detail', params: { id: nextPlanetId } }"
+            class="text-sm font-semibold text-ember hover:underline"
+            @click="setPageSlide('right')"
+          >
+            Next planet →
+          </RouterLink>
+        </div>
       </nav>
     </template>
   </main>

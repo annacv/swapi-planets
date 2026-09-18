@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { planetIdFromUrl } from '@/api/swapi'
 import LikeButton from '@/components/LikeButton.vue'
 import { PAGE_SIZE, usePlanetsStore } from '@/stores/planets'
+import { setPageSlide } from '@/utils/pageSlide'
 
 const props = defineProps<{
   focusedPlanetId: string | null
@@ -50,6 +51,7 @@ const listKey = computed(() => rows.value.map((row) => row.planet.url).join('|')
           <RouterLink
             :to="{ name: 'planet-detail', params: { id: row.id } }"
             class="w-[7rem] md:w-[11rem] font-stretch-ultra-condensed truncate text-right text-xl md:text-3xl text-star underline decoration-1 underline-offset-[6px] transition-[text-decoration-color] duration-500 motion-reduce:transition-none"
+            @click="setPageSlide('right')"
             :class="row.id === focusedPlanetId ? 'decoration-flame' : 'decoration-star'"
             :title="row.planet.name"
           >

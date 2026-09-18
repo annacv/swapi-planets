@@ -60,3 +60,37 @@ body {
 .planet-search::-webkit-search-results-decoration {
   appearance: none;
 }
+
+.slide-right-enter-active,
+.slide-right-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: transform 0.4s ease;
+}
+
+.slide-right-leave-active,
+.slide-left-leave-active {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.slide-right-enter-from,
+.slide-left-leave-to {
+  transform: translateX(100%);
+}
+
+.slide-right-leave-to,
+.slide-left-enter-from {
+  transform: translateX(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-right-enter-active,
+  .slide-right-leave-active,
+  .slide-left-enter-active,
+  .slide-left-leave-active {
+    transition: none;
+  }
+}
