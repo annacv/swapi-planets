@@ -68,4 +68,16 @@ describe('Planet detail', () => {
     cy.url().should('include', '/planets/2')
     cy.get('h1').should('contain', 'Alderaan')
   })
+
+  it('navigates to the previous planet in the list', () => {
+    cy.visit('/')
+    cy.wait(['@getFilms', '@getPage1', '@getPage2'])
+
+    cy.contains('a', 'Alderaan').click()
+    cy.url().should('include', '/planets/2')
+
+    cy.contains('Previous planet').click()
+    cy.url().should('include', '/planets/1')
+    cy.get('h1').should('contain', 'Tatooine')
+  })
 })
