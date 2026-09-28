@@ -13,7 +13,14 @@ import { planetSurfaceStyle } from '@/utils/planetSurface'
 const route = useRoute()
 const store = usePlanetsStore()
 const { planetsById, detailLoading, detailError, filteredPlanets, allPlanets } = storeToRefs(store)
-const { loadPlanet, loadCatalogue, filmTitlesFor, residentNamesFor } = store
+const {
+  loadPlanet,
+  loadCatalogue,
+  loadResidents,
+  filmTitlesFor,
+  residentNamesFor,
+  residentsStatusFor,
+} = store
 
 const planetId = computed(() => String(route.params.id))
 const planet = computed(() => planetsById.value[planetId.value])
@@ -31,11 +38,29 @@ const filmLine = computed(() => {
   return titles.length ? titles.join(', ') : 'No films listed'
 })
 
+const residentsStatus = computed(() => (planet.value ? residentsStatusFor(planet.value) : 'empty'))
+
 const residentLine = computed(() => {
   if (!planet.value) return ''
+  const status = residentsStatus.value
+  if (status === 'empty') return 'No known residents'
+  if (status === 'unavailable') return 'Residents unavailable'
   const names = residentNamesFor(planet.value)
-  return names.length ? names.join(', ') : 'No known residents'
+  if (status === 'loading' && names.length === 0) return 'Loading residents…'
+  if (status === 'loading') return `${names.join(', ')}, loading…`
+  return names.join(', ')
 })
+
+async function loadDetail(id: string, options?: { force?: boolean }) {
+  const loaded = await loadPlanet(id, options)
+  if (!loaded || planetIdFromUrl(loaded.url) !== planetId.value) return
+
+  // Residents are the smaller set; start them before catalogue pagination.
+  void loadResidents(loaded.residents)
+  // Catalogue powers previous/next planet; load after the detail paints so it
+  // stays off the LCP critical path on cold detail visits.
+  if (allPlanets.value.length === 0) void loadCatalogue()
+}
 
 const stats = computed(() => {
   if (!planet.value) return []
@@ -54,13 +79,7 @@ const stats = computed(() => {
 watch(
   planetId,
   (id) => {
-    void loadPlanet(id).then((loaded) => {
-      // Catalogue powers previous/next planet; load after the detail paints so it
-      // stays off the LCP critical path on cold detail visits.
-      if (loaded && allPlanets.value.length === 0) {
-        void loadCatalogue()
-      }
-    })
+    void loadDetail(id)
   },
   { immediate: true },
 )
@@ -88,7 +107,7 @@ watch(
       <button
         type="button"
         class="mt-3 rounded-full bg-red-900 px-3 py-1.5 text-sm text-red-50 hover:bg-red-800"
-        @click="loadPlanet(planetId, { force: true })"
+        @click="loadDetail(planetId, { force: true })"
       >
         Retry
       </button>
@@ -132,7 +151,7 @@ watch(
             </h2>
             <p
               class="mt-4 text-xl font-light leading-snug text-star md:text-2xl"
-              :class="{ italic: !planet.residents.length }"
+              :class="{ italic: residentsStatus === 'empty' }"
             >
               {{ residentLine }}
             </p>

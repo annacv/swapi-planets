@@ -34,4 +34,3 @@ export interface SwapiPerson {
 
 export type SwapiPlanetsPage = SwapiListResponse<SwapiPlanet>
 export type SwapiFilmsPage = SwapiListResponse<SwapiFilm>
-export type SwapiPeoplePage = SwapiListResponse<SwapiPerson>

@@ -44,15 +44,15 @@ vi.mock('@/api/swapi', async (importOriginal) => {
     ...actual,
     getAllPlanets: vi.fn<typeof actual.getAllPlanets>(),
     getFilms: vi.fn<typeof actual.getFilms>(),
-    getPeople: vi.fn<typeof actual.getPeople>(),
+    getPerson: vi.fn<typeof actual.getPerson>(),
     getPlanet: vi.fn<typeof actual.getPlanet>(),
   }
 })
 
-import { getAllPlanets, getFilms, getPeople, getPlanet } from '@/api/swapi'
+import { getAllPlanets, getFilms, getPerson, getPlanet } from '@/api/swapi'
 const mockedGetAllPlanets = vi.mocked(getAllPlanets)
 const mockedGetFilms = vi.mocked(getFilms)
-const mockedGetPeople = vi.mocked(getPeople)
+const mockedGetPerson = vi.mocked(getPerson)
 const mockedGetPlanet = vi.mocked(getPlanet)
 
 beforeEach(() => {
@@ -60,7 +60,6 @@ beforeEach(() => {
   setActivePinia(createPinia())
   vi.resetAllMocks()
   mockedGetFilms.mockResolvedValue([])
-  mockedGetPeople.mockResolvedValue([])
 })
 
 // ---------------------------------------------------------------------------
@@ -179,17 +178,35 @@ describe('filmTitlesFor', () => {
 // residentNamesFor
 // ---------------------------------------------------------------------------
 describe('residentNamesFor', () => {
-  it('maps resident URLs to names and filters out missing ones', async () => {
+  it('maps resident URLs to names from loadResidents and filters out missing ones', async () => {
     const person1 = makePerson(1)
-    mockedGetPeople.mockResolvedValue([person1])
-    mockedGetAllPlanets.mockResolvedValue([])
+    mockedGetPerson.mockImplementation(async (id) => {
+      if (String(id) === '1') return person1
+      throw new Error('missing')
+    })
     const store = usePlanetsStore()
-    await store.loadCatalogue()
-
     const planet = makePlanet({
       residents: [person1.url, 'https://swapi.dev/api/people/99/'],
     })
+
+    await store.loadResidents(planet.residents)
+
     expect(store.residentNamesFor(planet)).toEqual(['Person 1'])
+    expect(mockedGetAllPlanets).not.toHaveBeenCalled()
+  })
+
+  it('caches the name under the resident URL from the planet', async () => {
+    const residentUrl = 'https://swapi.dev/api/people/1/'
+    mockedGetPerson.mockResolvedValue({
+      name: 'Luke Skywalker',
+      url: 'http://swapi.dev/api/people/1/',
+    })
+    const store = usePlanetsStore()
+    const planet = makePlanet({ residents: [residentUrl] })
+
+    await store.loadResidents(planet.residents)
+
+    expect(store.residentNamesFor(planet)).toEqual(['Luke Skywalker'])
   })
 })
 
@@ -210,6 +227,7 @@ describe('loadCatalogue', () => {
     expect(store.allPlanets).toEqual(planets)
     expect(store.planetsById['1']).toEqual(planets[0])
     expect(store.listError).toBeNull()
+    expect(mockedGetPerson).not.toHaveBeenCalled()
   })
 
   it('sets listError on failure', async () => {
@@ -248,6 +266,7 @@ describe('loadPlanet', () => {
     expect(result).toEqual(planet)
     expect(store.planetsById['5']).toEqual(planet)
     expect(store.detailLoading).toBe(false)
+    expect(mockedGetPerson).not.toHaveBeenCalled()
   })
 
   it('uses cache by default and re-fetches when force is true', async () => {
@@ -272,26 +291,19 @@ describe('loadPlanet', () => {
     expect(store.detailError).toBe('Not found')
   })
 
-  it('dedupes concurrent film and people fetches when loading planet and catalogue together', async () => {
+  it('dedupes concurrent film fetches when loading planet and catalogue together', async () => {
     let resolveFilms!: (films: SwapiFilm[]) => void
     mockedGetFilms.mockReturnValue(
       new Promise<SwapiFilm[]>((resolve) => {
         resolveFilms = resolve
       }),
     )
-    let resolvePeople!: (people: SwapiPerson[]) => void
-    mockedGetPeople.mockReturnValue(
-      new Promise<SwapiPerson[]>((resolve) => {
-        resolvePeople = resolve
-      }),
-    )
     const film = makeFilm(1)
-    const person = makePerson(1)
     mockedGetPlanet.mockResolvedValue(
       makePlanet({
         url: 'https://swapi.dev/api/planets/5/',
         films: [film.url],
-        residents: [person.url],
+        residents: ['https://swapi.dev/api/people/1/'],
       }),
     )
     mockedGetAllPlanets.mockResolvedValue(makePlanets(2))
@@ -301,15 +313,138 @@ describe('loadPlanet', () => {
     const cataloguePromise = store.loadCatalogue()
 
     expect(mockedGetFilms).toHaveBeenCalledOnce()
-    expect(mockedGetPeople).toHaveBeenCalledOnce()
+    expect(mockedGetPerson).not.toHaveBeenCalled()
     resolveFilms([film])
-    resolvePeople([person])
 
     await Promise.all([planetPromise, cataloguePromise])
     expect(mockedGetFilms).toHaveBeenCalledOnce()
-    expect(mockedGetPeople).toHaveBeenCalledOnce()
+    expect(mockedGetPerson).not.toHaveBeenCalled()
     expect(store.filmTitlesFor(store.planetsById['5']!)).toEqual(['Film 1'])
-    expect(store.residentNamesFor(store.planetsById['5']!)).toEqual(['Person 1'])
+  })
+})
+
+describe('loadResidents', () => {
+  it('issues one getPerson when the same URL is loaded concurrently', async () => {
+    let resolvePerson!: (person: SwapiPerson) => void
+    mockedGetPerson.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePerson = resolve
+      }),
+    )
+    const url = 'https://swapi.dev/api/people/1/'
+    const store = usePlanetsStore()
+    const planet = makePlanet({ residents: [url] })
+
+    const first = store.loadResidents([url])
+    const second = store.loadResidents([url, url])
+    expect(mockedGetPerson).toHaveBeenCalledOnce()
+    expect(mockedGetPerson).toHaveBeenCalledWith('1')
+
+    resolvePerson(makePerson(1))
+    await Promise.all([first, second])
+    expect(store.residentNamesFor(planet)).toEqual(['Person 1'])
+  })
+
+  it('fetches only the missing URL for a second planet', async () => {
+    mockedGetPerson.mockImplementation(async (id) => makePerson(Number(id)))
+    const firstUrl = 'https://swapi.dev/api/people/1/'
+    const secondUrl = 'https://swapi.dev/api/people/2/'
+    const store = usePlanetsStore()
+
+    await store.loadResidents([firstUrl])
+    expect(mockedGetPerson).toHaveBeenCalledTimes(1)
+
+    await store.loadResidents([firstUrl, secondUrl])
+    expect(mockedGetPerson).toHaveBeenCalledTimes(2)
+    expect(mockedGetPerson).toHaveBeenLastCalledWith('2')
+    expect(store.residentNamesFor(makePlanet({ residents: [firstUrl, secondUrl] }))).toEqual([
+      'Person 1',
+      'Person 2',
+    ])
+  })
+
+  it('records an unparseable URL as failed without requesting it', async () => {
+    const store = usePlanetsStore()
+    const planet = makePlanet({ residents: ['not-a-person'] })
+
+    await expect(store.loadResidents(planet.residents)).resolves.toBeUndefined()
+    expect(mockedGetPerson).not.toHaveBeenCalled()
+    expect(store.residentsStatusFor(planet)).toBe('unavailable')
+  })
+})
+
+describe('residentsStatusFor', () => {
+  it('returns empty when the planet has no resident URLs', () => {
+    const store = usePlanetsStore()
+    expect(store.residentsStatusFor(makePlanet())).toBe('empty')
+  })
+
+  it('returns loading when resident URLs are present but not started', () => {
+    const store = usePlanetsStore()
+    const planet = makePlanet({ residents: ['https://swapi.dev/api/people/1/'] })
+    expect(store.residentsStatusFor(planet)).toBe('loading')
+  })
+
+  it('returns ready with a single name when one resident resolves and one fails', async () => {
+    mockedGetPerson.mockImplementation(async (id) => {
+      if (String(id) === '2') throw new Error('nope')
+      return makePerson(Number(id))
+    })
+    const store = usePlanetsStore()
+    const planet = makePlanet({
+      residents: ['https://swapi.dev/api/people/1/', 'https://swapi.dev/api/people/2/'],
+    })
+
+    await store.loadResidents(planet.residents)
+
+    expect(store.residentsStatusFor(planet)).toBe('ready')
+    expect(store.residentNamesFor(planet)).toEqual(['Person 1'])
+    expect(store.detailError).toBeNull()
+  })
+
+  it('returns unavailable when every resident URL fails', async () => {
+    mockedGetPerson.mockRejectedValue(new Error('down'))
+    const store = usePlanetsStore()
+    const planet = makePlanet({
+      residents: ['https://swapi.dev/api/people/1/', 'https://swapi.dev/api/people/2/'],
+    })
+
+    await expect(store.loadResidents(planet.residents)).resolves.toBeUndefined()
+    expect(store.residentsStatusFor(planet)).toBe('unavailable')
+    expect(store.residentNamesFor(planet)).toEqual([])
+  })
+
+  it('returns loading as soon as a failed URL is retried', async () => {
+    let rejectPerson!: (error: Error) => void
+    mockedGetPerson.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectPerson = reject
+      }),
+    )
+    const url = 'https://swapi.dev/api/people/1/'
+    const planet = makePlanet({ residents: [url] })
+    const store = usePlanetsStore()
+
+    const first = store.loadResidents([url])
+    expect(store.residentsStatusFor(planet)).toBe('loading')
+    rejectPerson(new Error('down'))
+    await first
+    expect(store.residentsStatusFor(planet)).toBe('unavailable')
+
+    let resolveRetry!: (person: SwapiPerson) => void
+    mockedGetPerson.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRetry = resolve
+      }),
+    )
+    const retry = store.loadResidents([url])
+    expect(mockedGetPerson).toHaveBeenCalledTimes(2)
+    expect(store.residentsStatusFor(planet)).toBe('loading')
+
+    resolveRetry(makePerson(1))
+    await retry
+    expect(store.residentsStatusFor(planet)).toBe('ready')
+    expect(store.residentNamesFor(planet)).toEqual(['Person 1'])
   })
 })
 

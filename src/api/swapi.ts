@@ -1,11 +1,4 @@
-import type {
-  SwapiFilm,
-  SwapiFilmsPage,
-  SwapiPeoplePage,
-  SwapiPerson,
-  SwapiPlanet,
-  SwapiPlanetsPage,
-} from './types'
+import type { SwapiFilm, SwapiFilmsPage, SwapiPerson, SwapiPlanet, SwapiPlanetsPage } from './types'
 
 const SWAPI_BASE_URL = 'https://swapi.dev/api'
 
@@ -28,6 +21,11 @@ export function planetIdFromUrl(url: string): string {
   }
 
   return id
+}
+
+export function personIdFromUrl(url: string): string | null {
+  const match = url.match(/\/people\/(\d+)\/?$/)
+  return match?.[1] ?? null
 }
 
 export function getPlanets(page: number): Promise<SwapiPlanetsPage> {
@@ -59,20 +57,7 @@ export async function getFilms(): Promise<SwapiFilm[]> {
   return payload.results
 }
 
-export async function getPeople(): Promise<SwapiPerson[]> {
-  const firstPage = await fetchJson<SwapiPeoplePage>('/people/')
-  const pageSize = firstPage.results.length || 10
-  const totalPages = Math.ceil(firstPage.count / pageSize)
-
-  if (totalPages <= 1) {
-    return firstPage.results
-  }
-
-  const remainingPages = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, index) =>
-      fetchJson<SwapiPeoplePage>(`/people/?page=${index + 2}`),
-    ),
-  )
-
-  return firstPage.results.concat(...remainingPages.map((page) => page.results))
+// Take an id, not the resident URL: SWAPI lists some people as http://, which would be mixed content.
+export function getPerson(id: string | number): Promise<SwapiPerson> {
+  return fetchJson<SwapiPerson>(`/people/${id}/`)
 }

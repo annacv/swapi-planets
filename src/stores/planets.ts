@@ -1,7 +1,14 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { getAllPlanets, getFilms, getPeople, getPlanet, planetIdFromUrl } from '@/api/swapi'
+import {
+  getAllPlanets,
+  getFilms,
+  getPerson,
+  getPlanet,
+  personIdFromUrl,
+  planetIdFromUrl,
+} from '@/api/swapi'
 import type { SwapiPlanet } from '@/api/types'
 import { pageCountFor, pageSlice } from '@/utils/pagination'
 import { readStringList, writeStringList } from '@/utils/storage'
@@ -12,6 +19,8 @@ export const PAGE_SIZE = 10
 export const usePlanetsStore = defineStore('planets', () => {
   const filmTitlesByUrl = ref<Record<string, string>>({})
   const residentNamesByUrl = ref<Record<string, string>>({})
+  const failedResidentUrls = ref<Record<string, true>>({})
+  const residentRequests = new Map<string, Promise<void>>()
   const allPlanets = ref<SwapiPlanet[]>([])
   const planetsById = ref<Record<string, SwapiPlanet>>({})
   const currentPage = ref(1)
@@ -66,6 +75,65 @@ export const usePlanetsStore = defineStore('planets', () => {
       .filter((name): name is string => Boolean(name))
   }
 
+  function residentsStatusFor(planet: SwapiPlanet): 'empty' | 'loading' | 'ready' | 'unavailable' {
+    if (planet.residents.length === 0) return 'empty'
+
+    let named = 0
+    let failed = 0
+    for (const url of planet.residents) {
+      if (residentNamesByUrl.value[url]) named += 1
+      else if (failedResidentUrls.value[url]) failed += 1
+    }
+
+    if (named + failed < planet.residents.length) return 'loading'
+    if (named > 0) return 'ready'
+    return 'unavailable'
+  }
+
+  function rememberResidentFailure(url: string) {
+    failedResidentUrls.value = { ...failedResidentUrls.value, [url]: true }
+  }
+
+  function forgetResidentFailure(url: string) {
+    if (!failedResidentUrls.value[url]) return
+    const next = { ...failedResidentUrls.value }
+    delete next[url]
+    failedResidentUrls.value = next
+  }
+
+  function fetchResident(url: string): Promise<void> {
+    if (residentNamesByUrl.value[url]) return Promise.resolve()
+
+    const inFlight = residentRequests.get(url)
+    if (inFlight) return inFlight
+
+    const id = personIdFromUrl(url)
+    if (!id) {
+      rememberResidentFailure(url)
+      return Promise.resolve()
+    }
+
+    forgetResidentFailure(url)
+
+    const request = Promise.resolve(getPerson(id))
+      .then((person) => {
+        residentNamesByUrl.value = { ...residentNamesByUrl.value, [url]: person.name }
+      })
+      .catch(() => {
+        rememberResidentFailure(url)
+      })
+      .finally(() => {
+        residentRequests.delete(url)
+      })
+
+    residentRequests.set(url, request)
+    return request
+  }
+
+  async function loadResidents(urls: string[]): Promise<void> {
+    await Promise.allSettled(urls.map((url) => fetchResident(url)))
+  }
+
   function toggleFavourite(id: string) {
     const next = isFavourite(id)
       ? favouriteIds.value.filter((favouriteId) => favouriteId !== id)
@@ -104,27 +172,6 @@ export const usePlanetsStore = defineStore('planets', () => {
     await filmsRequest
   }
 
-  let peopleRequest: Promise<void> | null = null
-
-  async function ensurePeople(): Promise<void> {
-    if (Object.keys(residentNamesByUrl.value).length > 0) return
-
-    if (!peopleRequest) {
-      peopleRequest = getPeople()
-        .then((people) => {
-          residentNamesByUrl.value = Object.fromEntries(
-            people.map((person) => [person.url, person.name]),
-          )
-        })
-        .catch((error) => {
-          peopleRequest = null
-          throw error
-        })
-    }
-
-    await peopleRequest
-  }
-
   async function loadCatalogue({ force = false } = {}): Promise<void> {
     listError.value = null
 
@@ -134,7 +181,7 @@ export const usePlanetsStore = defineStore('planets', () => {
 
     listLoading.value = true
     try {
-      await Promise.all([ensureFilms(), ensurePeople()])
+      await ensureFilms()
       const planets = await getAllPlanets()
       allPlanets.value = planets
       planets.forEach(cachePlanet)
@@ -155,7 +202,8 @@ export const usePlanetsStore = defineStore('planets', () => {
 
     detailLoading.value = true
     try {
-      await Promise.all([ensureFilms(), ensurePeople()])
+      // Films are one request both views need before first paint; residents load after.
+      await ensureFilms()
       const planet = await getPlanet(id)
       cachePlanet(planet)
       return planet
@@ -184,6 +232,8 @@ export const usePlanetsStore = defineStore('planets', () => {
     planetsById,
     filmTitlesFor,
     residentNamesFor,
+    residentsStatusFor,
+    loadResidents,
     isFavourite,
     toggleFavourite,
     setPage,
