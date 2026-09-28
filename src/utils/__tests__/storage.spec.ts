@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { readStringList, writeStringList } from '../storage'
 
 const TEST_KEY = '__test_storage_key__'
@@ -20,5 +20,17 @@ describe('readStringList / writeStringList', () => {
 
     localStorage.setItem(TEST_KEY, JSON.stringify(['a', 42, null, 'b']))
     expect(readStringList(TEST_KEY)).toEqual(['a', 'b'])
+  })
+
+  it('returns when setItem throws', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
+
+    try {
+      expect(() => writeStringList(TEST_KEY, ['a', 'b'])).not.toThrow()
+    } finally {
+      vi.restoreAllMocks()
+    }
   })
 })

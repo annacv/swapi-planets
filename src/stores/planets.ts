@@ -38,11 +38,13 @@ export const usePlanetsStore = defineStore('planets', () => {
   }
 
   const filteredPlanets = computed(() => {
-    const planets = showFavouritesOnly.value
-      ? allPlanets.value.filter((planet) => isFavourite(planetIdFromUrl(planet.url)))
-      : allPlanets.value
+    const listed = allPlanets.value.filter((planet) => {
+      const id = planetIdFromUrl(planet.url)
+      if (!id || !planet.name || planet.name === 'unknown') return false
+      if (showFavouritesOnly.value && !isFavourite(id)) return false
+      return true
+    })
 
-    const listed = planets.filter((planet) => planet.name && planet.name !== 'unknown')
     const query = searchQuery.value.trim().toLowerCase()
     if (!query) return listed
     return listed.filter((planet) => planet.name.toLowerCase().startsWith(query))
@@ -60,7 +62,9 @@ export const usePlanetsStore = defineStore('planets', () => {
   }
 
   function cachePlanet(planet: SwapiPlanet) {
-    planetsById.value[planetIdFromUrl(planet.url)] = planet
+    const id = planetIdFromUrl(planet.url)
+    if (!id) return
+    planetsById.value[id] = planet
   }
 
   function filmTitlesFor(planet: SwapiPlanet): string[] {

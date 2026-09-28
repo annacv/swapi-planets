@@ -25,7 +25,7 @@ const {
 const planetId = computed(() => String(route.params.id))
 const planet = computed(() => planetsById.value[planetId.value])
 const filteredPlanetIds = computed(() =>
-  filteredPlanets.value.map((item) => planetIdFromUrl(item.url)),
+  filteredPlanets.value.map((item) => planetIdFromUrl(item.url)!),
 )
 const nextPlanetId = computed(() => browsePlanetId(filteredPlanetIds.value, planetId.value, 'next'))
 const previousPlanetId = computed(() =>

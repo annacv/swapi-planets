@@ -12,15 +12,9 @@ async function fetchJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
-export function planetIdFromUrl(url: string): string {
+export function planetIdFromUrl(url: string): string | null {
   const match = url.match(/\/planets\/(\d+)\/?$/)
-  const id = match?.[1]
-
-  if (!id) {
-    throw new Error(`Could not extract planet id from URL: ${url}`)
-  }
-
-  return id
+  return match?.[1] ?? null
 }
 
 export function personIdFromUrl(url: string): string | null {

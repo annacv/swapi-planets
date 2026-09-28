@@ -7,13 +7,10 @@ describe('planetIdFromUrl', () => {
     expect(planetIdFromUrl('https://swapi.dev/api/planets/42')).toBe('42')
   })
 
-  it('throws on malformed or non-planet URLs', () => {
-    expect(() => planetIdFromUrl('https://swapi.dev/api/planets/')).toThrow(
-      'Could not extract planet id',
-    )
-    expect(() => planetIdFromUrl('https://swapi.dev/api/people/1/')).toThrow(
-      'Could not extract planet id',
-    )
+  it('returns null for a malformed URL and does not throw', () => {
+    expect(planetIdFromUrl('https://swapi.dev/api/planets/')).toBeNull()
+    expect(planetIdFromUrl('https://swapi.dev/api/people/1/')).toBeNull()
+    expect(planetIdFromUrl('not-a-url')).toBeNull()
   })
 })
 

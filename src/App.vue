@@ -27,7 +27,7 @@ router.beforeEach((to, from) => {
       fromName: from.name,
       toPlanetId: to.params.id != null ? String(to.params.id) : undefined,
       fromPlanetId: from.params.id != null ? String(from.params.id) : undefined,
-      orderedPlanetIds: filteredPlanets.value.map((planet) => planetIdFromUrl(planet.url)),
+      orderedPlanetIds: filteredPlanets.value.map((planet) => planetIdFromUrl(planet.url)!),
     })
 })
 </script>
