@@ -76,6 +76,7 @@ onMounted(() => {
          when rows mount. 2.25rem is the row height; 1rem is `gap-4` so the box is not short on mobile. -->
     <section
       class="flex flex-1 flex-col gap-6 px-6 pb-6 lg:col-start-2 lg:row-start-2 lg:px-10 lg:pr-16 xl:pr-32"
+      role="status"
       :style="{ minHeight: `calc(${PAGE_SIZE} * 2.25rem + ${PAGE_SIZE - 1} * 1rem)` }"
     >
       <p v-if="listLoading" class="mt-10 text-sm text-muted">Loading planets…</p>
