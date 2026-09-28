@@ -30,13 +30,18 @@ const LG_QUERY = '(min-width: 1024px)'
 const isLg = ref(typeof window !== 'undefined' ? window.matchMedia(LG_QUERY).matches : true)
 const maxCirclePx = computed(() => (isLg.value ? MAX_CIRCLE_PX : MAX_CIRCLE_MOBILE_PX))
 const maxDiameter = computed(() => maxKnownDiameter(props.catalogue))
-const pageKey = computed(() => props.planets.map((planet) => planetIdFromUrl(planet.url)).join('|'))
+
+function planetId(planet: SwapiPlanet): string {
+  return planetIdFromUrl(planet.url)!
+}
+
+const pageKey = computed(() => props.planets.map((planet) => planetId(planet)).join('|'))
 const pointerIndex = ref<number | null>(null)
 const currentIndex = ref(0)
 
 function indexFromPointerId(id: string | null | undefined) {
   if (!id) return null
-  const index = props.planets.findIndex((planet) => planetIdFromUrl(planet.url) === id)
+  const index = props.planets.findIndex((planet) => planetId(planet) === id)
   return index === -1 ? null : index
 }
 
@@ -46,7 +51,7 @@ watch(
   [focusedIndex, () => props.planets],
   () => {
     const planet = props.planets[focusedIndex.value]
-    emit('focus-planet', planet ? planetIdFromUrl(planet.url) : null)
+    emit('focus-planet', planet ? planetId(planet) : null)
   },
   { immediate: true },
 )
@@ -118,7 +123,7 @@ onUnmounted(() => {
         <RouterLink
           v-for="(planet, index) in planets"
           :key="planet.url"
-          :to="{ name: 'planet-detail', params: { id: planetIdFromUrl(planet.url) } }"
+          :to="{ name: 'planet-detail', params: { id: planetId(planet) } }"
           class="planet-dot absolute rounded-full"
           @click="setPageSlide('right')"
           :class="index === focusedIndex ? 'planet-dot-active' : undefined"

@@ -1,26 +1,57 @@
 import type { SwapiFilm, SwapiFilmsPage, SwapiPerson, SwapiPlanet, SwapiPlanetsPage } from './types'
 
 const SWAPI_BASE_URL = 'https://swapi.dev/api'
+const REQUEST_TIMEOUT_MS = 10_000
 
-async function fetchJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${SWAPI_BASE_URL}${path}`)
+function isTransientFetchError(error: unknown): boolean {
+  return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'TypeError')
+}
+
+function describedFetchError(error: unknown): unknown {
+  if (!(error instanceof Error)) {
+    return error
+  }
+  if (error.name === 'TimeoutError') {
+    return new Error('SWAPI request timed out')
+  }
+  if (error.name === 'TypeError') {
+    return new Error('Could not reach SWAPI')
+  }
+  return error
+}
+
+async function fetchJsonOnce<T>(url: string): Promise<T> {
+  // A fresh signal per attempt. A shared timeout is already expired when the retry starts.
+  const response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
 
   if (!response.ok) {
     throw new Error(`SWAPI request failed: ${response.status} ${response.statusText}`)
   }
 
-  return response.json() as Promise<T>
+  return (await response.json()) as T
 }
 
-export function planetIdFromUrl(url: string): string {
-  const match = url.match(/\/planets\/(\d+)\/?$/)
-  const id = match?.[1]
+async function fetchJson<T>(path: string): Promise<T> {
+  const url = `${SWAPI_BASE_URL}${path}`
 
-  if (!id) {
-    throw new Error(`Could not extract planet id from URL: ${url}`)
+  try {
+    return await fetchJsonOnce<T>(url)
+  } catch (error) {
+    if (!isTransientFetchError(error)) {
+      throw describedFetchError(error)
+    }
   }
 
-  return id
+  try {
+    return await fetchJsonOnce<T>(url)
+  } catch (error) {
+    throw describedFetchError(error)
+  }
+}
+
+export function planetIdFromUrl(url: string): string | null {
+  const match = url.match(/\/planets\/(\d+)\/?$/)
+  return match?.[1] ?? null
 }
 
 export function personIdFromUrl(url: string): string | null {

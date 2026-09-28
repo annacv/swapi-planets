@@ -10,5 +10,9 @@ export function readStringList(key: string): string[] {
 }
 
 export function writeStringList(key: string, items: string[]) {
-  localStorage.setItem(key, JSON.stringify(items))
+  try {
+    localStorage.setItem(key, JSON.stringify(items))
+  } catch {
+    return
+  }
 }

@@ -21,7 +21,7 @@ const { filmTitlesFor } = planetsStore
 
 const rows = computed(() =>
   listedPlanets.value.map((planet) => {
-    const id = planetIdFromUrl(planet.url)
+    const id = planetIdFromUrl(planet.url)!
     return {
       planet,
       id,

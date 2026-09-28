@@ -83,6 +83,21 @@ describe('filteredPlanets', () => {
     expect(store.filteredPlanets.map((p) => p.name)).toEqual(['Tatooine'])
   })
 
+  it('drops planets whose url is not a planet id', () => {
+    const store = usePlanetsStore()
+    store.allPlanets = [
+      makePlanet({ name: 'Tatooine', url: 'https://swapi.dev/api/planets/1/' }),
+      makePlanet({ name: 'Broken', url: 'https://swapi.dev/api/people/2/' }),
+    ]
+
+    expect(store.filteredPlanets.map((p) => p.name)).toEqual(['Tatooine'])
+    expect(store.pageCount).toBe(1)
+
+    store.toggleFavourite('1')
+    store.toggleFavouritesFilter()
+    expect(store.filteredPlanets.map((p) => p.name)).toEqual(['Tatooine'])
+  })
+
   it('returns only favourited planets when showFavouritesOnly is on', () => {
     const store = usePlanetsStore()
     store.allPlanets = [
@@ -148,6 +163,20 @@ describe('toggleFavourite', () => {
 
     store.toggleFavourite('1')
     expect(store.isFavourite('1')).toBe(false)
+  })
+
+  it('keeps the in-memory favourite when storage throws', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
+    const store = usePlanetsStore()
+
+    try {
+      expect(() => store.toggleFavourite('1')).not.toThrow()
+      expect(store.isFavourite('1')).toBe(true)
+    } finally {
+      vi.restoreAllMocks()
+    }
   })
 
   it('restores favourites from localStorage on store creation', () => {
@@ -282,6 +311,15 @@ describe('loadPlanet', () => {
 
     expect(await store.loadPlanet('5', { force: true })).toEqual(fresh)
     expect(mockedGetPlanet).toHaveBeenCalledOnce()
+  })
+
+  it('does not cache a planet whose url has no id', async () => {
+    const planet = makePlanet({ name: 'Broken', url: 'not-a-url' })
+    mockedGetPlanet.mockResolvedValue(planet)
+    const store = usePlanetsStore()
+
+    expect(await store.loadPlanet('x')).toEqual(planet)
+    expect(store.planetsById).toEqual({})
   })
 
   it('sets detailError on failure and returns null', async () => {
