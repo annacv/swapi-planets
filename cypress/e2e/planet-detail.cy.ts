@@ -69,6 +69,33 @@ describe('Planet detail', () => {
     cy.get('h1').should('contain', 'Alderaan')
   })
 
+  it('shows a loading line, then a partial resident list when one person fails', () => {
+    cy.intercept('GET', 'https://swapi.dev/api/planets/1/', { fixture: 'planet-residents.json' }).as(
+      'getPlanetResidents',
+    )
+    cy.intercept('GET', 'https://swapi.dev/api/people/1/', {
+      delay: 1000,
+      body: { name: 'Luke Skywalker', url: 'https://swapi.dev/api/people/1/' },
+    }).as('getLuke')
+    cy.intercept('GET', 'https://swapi.dev/api/people/2/', {
+      delay: 1000,
+      statusCode: 500,
+      body: { name: 'C-3PO', url: 'https://swapi.dev/api/people/2/' },
+    }).as('getFailedResident')
+
+    cy.visit('/planets/1')
+    cy.contains('Loading residents…').should('be.visible')
+    cy.wait(['@getLuke', '@getFailedResident'])
+
+    cy.get('[aria-labelledby="residents-heading"] p')
+      .should('contain', 'Luke Skywalker')
+      .and('not.contain', 'C-3PO')
+      .and('not.contain', 'Loading')
+      .and('not.contain', 'unavailable')
+      .and('not.contain', 'No known residents')
+      .and('not.have.class', 'italic')
+  })
+
   it('navigates to the previous planet in the list', () => {
     cy.visit('/')
     cy.wait(['@getFilms', '@getPage1', '@getPage2'])
