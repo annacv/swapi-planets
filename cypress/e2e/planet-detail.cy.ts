@@ -70,9 +70,21 @@ describe('Planet detail', () => {
   })
 
   it('shows a loading line, then a partial resident list when one person fails', () => {
+    const residents = ['https://swapi.dev/api/people/1/', 'https://swapi.dev/api/people/2/']
+
     cy.intercept('GET', 'https://swapi.dev/api/planets/1/', { fixture: 'planet-residents.json' }).as(
       'getPlanetResidents',
     )
+    // Catalogue responses replace the cached planet. Give Tatooine the same
+    // resident URLs so that replacement does not clear the detail list.
+    cy.fixture('planets-page1.json').then((page) => {
+      cy.intercept('GET', 'https://swapi.dev/api/planets/?page=1', {
+        ...page,
+        results: page.results.map((planet: { url: string }, index: number) =>
+          index === 0 ? { ...planet, residents } : planet,
+        ),
+      }).as('getPage1WithResidents')
+    })
     cy.intercept('GET', 'https://swapi.dev/api/people/1/', {
       delay: 1000,
       body: { name: 'Luke Skywalker', url: 'https://swapi.dev/api/people/1/' },
@@ -85,7 +97,7 @@ describe('Planet detail', () => {
 
     cy.visit('/planets/1')
     cy.contains('Loading residents…').should('be.visible')
-    cy.wait(['@getLuke', '@getFailedResident'])
+    cy.wait(['@getLuke', '@getFailedResident', '@getPage1WithResidents', '@getPage2'])
 
     cy.get('[aria-labelledby="residents-heading"] p')
       .should('contain', 'Luke Skywalker')
